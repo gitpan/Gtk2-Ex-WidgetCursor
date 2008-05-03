@@ -1,0 +1,18 @@
+Source: libgtk2-ex-widgetcursor-perl
+Section: perl
+Priority: optional
+Build-Depends: cdbs, debhelper (>= 4)
+Maintainer: Kevin Ryde <user42@zip.com.au>
+Standards-Version: 3.7.3
+Homepage: http://www.geocities.com/user42_kevin/gtk2-ex-widgetcursor/index.html
+Bugs: mailto:user42@zip.com.au
+
+Package: libgtk2-ex-widgetcursor-perl
+Architecture: all
+Depends: libgtk2-perl
+Description: Mouse pointer cursor in widgets
+ Gtk2::Ex::WidgetCursor manages the mouse pointer cursor displayed in
+ the window of a widget.  It helps widget or application actions
+ cooperate with what is normally a write-only resource on the window.
+ A global busy is included for easy display of a wristwatch in all
+ application windows while number crunching.

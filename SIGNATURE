@@ -1,0 +1,46 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.55.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 8624bcdae55baeef00cd11d5dfcfa60f68710a02 COPYING
+SHA1 9b9e5c461826e8c7a701f3bb4b72b9ca3eb4a999 MANIFEST
+SHA1 9032a648902b467c64f21873a84313e793e02a58 META.yml
+SHA1 f0d281f0af60ff90147456efaba1d4baab4fa27a Makefile.PL
+SHA1 1177f24de3e5ba5e74d025fd17421f9f5f96b023 README
+SHA1 2219c7620f73226849b7430a5ada81fb32ed1b6b debian/changelog
+SHA1 1b6453892473a467d07372d45eb05abc2031647a debian/compat
+SHA1 00827f018ccb905fdb5a904269bf2e8a8ee3b021 debian/control
+SHA1 72d13a5aabb143a9953a92f9952c3aa56f077d8d debian/copyright
+SHA1 b5ff3a5f5fa33d93a7b0c5f595fd7c3269377fa0 debian/rules
+SHA1 723140ca363ab86b825ac814acc843b36b18bc0b debian/watch
+SHA1 2fc2abd9583400e4457a527fc90325b374e9e51f devel/busynew.pl
+SHA1 a77ab489cc43fcbe955b3493881610e3b7148c2b devel/combo.pl
+SHA1 90f9283e3576f4336a3f4451f13e3ce79d5f5fb5 devel/entry.pl
+SHA1 f08a49b01e4be37d690c8788843d3d6db8afa75c devel/run.pl
+SHA1 9c05f4d967573422398bcf5939ff6bf2b29813ee examples/cursortype.pl
+SHA1 78da376911f53b37418fd45befbdb8a7361a252b examples/heart.pl
+SHA1 9d63fcab7927973d9cc170c8953ca5cf3f77e4a7 examples/misc.pl
+SHA1 98512ebb694985257201d19840b71c65e6cb18af examples/priority.pl
+SHA1 ff4d1286322f634d01d3ccf148aa5c9e349b0cbe examples/timebusy.pl
+SHA1 623a5451d5ffc1bee55082cc3da664d470054661 lib/Gtk2/Ex/WidgetCursor.pm
+SHA1 f3edba372d2ff3a250822a5ae58fccbde91bfa88 t/WidgetCursor.t
+SHA1 a661a39e55a4127aecb1b97a631c4f01f7dce8c6 t/pod.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFIG62zLFMCIV9q3ToRAo7yAJ46D2MWkd5VH4pxGYu/7bQ00mtvQwCeNeTD
+in+8FOOMO3Fjd/zFZdpxWj4=
+=zbp9
+-----END PGP SIGNATURE-----
