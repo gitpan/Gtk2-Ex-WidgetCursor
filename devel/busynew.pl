@@ -18,13 +18,31 @@
 # with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Currently only the busy/open/rebusy gets the watch cursor on the newly
-# opened window.
+# The Busy/Open now has the new window noticed, the same as the way
+# Busy/Open/Rebusy had to be done in WidgetCursor version 1.
+# 
 
 use strict;
 use warnings;
 use Gtk2 '-init';
 use Gtk2::Ex::WidgetCursor;
+
+# hack to get Gtk2-Perl 1.181 to finish loading Gtk2::Widget
+# Gtk2::Widget->find_property ('name');
+#
+# use Data::Dumper;
+# Gtk2::Widget->signal_add_emission_hook
+#   (realize => sub {
+#      print Dumper (\@_);
+#      my ($invocation_hint, $param_list) = @_;
+#      my ($widget) = @$param_list;
+#      if ($widget->isa ('Gtk2::Window')) {
+#        print __FILE__,": realize $widget\n";
+#        print __FILE__,": toplevels now ",
+#          join(' ', Gtk2::Window->list_toplevels),"\n";
+#      }
+#      return 1; # stay connected
+#    });
 
 my $toplevel = Gtk2::Window->new ('toplevel');
 $toplevel->set_name ("my_toplevel_1");
@@ -39,16 +57,16 @@ $toplevel->add ($vbox);
 {
   my $button = Gtk2::Button->new_with_label ("Busy and Open");
   $button->signal_connect (clicked => sub {
-                             print "run.pl: busy\n";
+                             print __FILE__,": busy\n";
                              Gtk2::Ex::WidgetCursor->busy;
                              my $toplevel = Gtk2::Window->new ('toplevel');
                              $toplevel->set_size_request (100, 100);
 
-                             print "run.pl: show\n";
+                             print __FILE__,": show\n";
                              $toplevel->show_all;
                              sleep (2);
 
-                             print "run.pl: flush\n";
+                             print __FILE__,": flush\n";
                              $toplevel->get_display->flush;
                              sleep (2);
                            });
@@ -58,14 +76,14 @@ $toplevel->add ($vbox);
 {
   my $button = Gtk2::Button->new_with_label ("Busy / Open / Re-Busy");
   $button->signal_connect (clicked => sub {
-                             print "run.pl: busy\n";
+                             print __FILE__,": busy\n";
                              Gtk2::Ex::WidgetCursor->busy;
                              my $toplevel = Gtk2::Window->new ('toplevel');
                              $toplevel->set_size_request (100, 100);
                              $toplevel->show_all;
 
                              Gtk2::Ex::WidgetCursor->busy;
-                             print "run.pl: sleep now\n";
+                             print __FILE__,": sleep now\n";
                              sleep (4);
                            });
   $vbox->pack_start ($button, 1,1,0);

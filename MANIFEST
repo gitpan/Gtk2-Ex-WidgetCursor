@@ -1,3 +1,4 @@
+Changes
 COPYING
 debian/changelog
 debian/compat
@@ -8,6 +9,7 @@ debian/watch
 devel/busynew.pl
 devel/combo.pl
 devel/entry.pl
+devel/no-window.pl
 devel/run.pl
 examples/cursortype.pl
 examples/heart.pl
@@ -19,6 +21,7 @@ Makefile.PL
 MANIFEST			This list of files
 README
 SIGNATURE
+t/busy-first.t
 t/pod.t
 t/WidgetCursor.t
 META.yml                                 Module meta-data (added by MakeMaker)

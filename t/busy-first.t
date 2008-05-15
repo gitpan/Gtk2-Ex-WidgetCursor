@@ -1,0 +1,34 @@
+# Copyright 2008 Kevin Ryde
+
+# This file is part of Gtk2-Ex-WidgetCursor.
+#
+# Gtk2-Ex-WidgetCursor is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as published
+# by the Free Software Foundation; either version 3, or (at your option) any
+# later version.
+#
+# Gtk2-Ex-WidgetCursor is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict;
+use warnings;
+use Test::More tests => 1;
+
+use Scalar::Util;
+use Gtk2;
+use Gtk2::Ex::WidgetCursor;
+
+SKIP: {
+  if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 1; }
+
+  # go busy with no widgets, exercising a workaround for Gtk2-Perl 1.181
+  Gtk2::Ex::WidgetCursor->busy;
+  ok (1);
+};
+
+exit 0;

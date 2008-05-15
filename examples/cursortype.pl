@@ -21,7 +21,7 @@
 # This is a bit of fun presenting all available cursor types in a combobox,
 # to be set onto the label widget.
 #
-# It also illustrates one of the oddities of the current implementation.
+# It also illustrates one of the failings of the current implementation.
 # Gtk2::Label is a no-window widget, as is Gtk2::ComboBox, so a WidgetCursor
 # on the label would actually set the toplevel window and show on both label
 # and combobox.  Putting the label in a Gtk2::EventBox creates a subwindow

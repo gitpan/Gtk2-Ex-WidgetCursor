@@ -15,32 +15,35 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 8624bcdae55baeef00cd11d5dfcfa60f68710a02 COPYING
-SHA1 9b9e5c461826e8c7a701f3bb4b72b9ca3eb4a999 MANIFEST
-SHA1 9032a648902b467c64f21873a84313e793e02a58 META.yml
+SHA1 96818753cedd0f9041001c5d2a1732e72c5bc85d Changes
+SHA1 a5bd904c2056432c6f1432b284a359655dc7ad80 MANIFEST
+SHA1 953cd0fae56b87536288a5efd25b889c5558181f META.yml
 SHA1 f0d281f0af60ff90147456efaba1d4baab4fa27a Makefile.PL
 SHA1 1177f24de3e5ba5e74d025fd17421f9f5f96b023 README
-SHA1 2219c7620f73226849b7430a5ada81fb32ed1b6b debian/changelog
+SHA1 c5bcaaaa9ff5518fa3684e29c6bf82b5497e37a2 debian/changelog
 SHA1 1b6453892473a467d07372d45eb05abc2031647a debian/compat
 SHA1 00827f018ccb905fdb5a904269bf2e8a8ee3b021 debian/control
-SHA1 72d13a5aabb143a9953a92f9952c3aa56f077d8d debian/copyright
+SHA1 1c490ec2d7220e3fca1b7394a7783f4704ce897f debian/copyright
 SHA1 b5ff3a5f5fa33d93a7b0c5f595fd7c3269377fa0 debian/rules
 SHA1 723140ca363ab86b825ac814acc843b36b18bc0b debian/watch
-SHA1 2fc2abd9583400e4457a527fc90325b374e9e51f devel/busynew.pl
+SHA1 be5cdf3c098e291ea3e76e0b89bdcad6a30a66bb devel/busynew.pl
 SHA1 a77ab489cc43fcbe955b3493881610e3b7148c2b devel/combo.pl
 SHA1 90f9283e3576f4336a3f4451f13e3ce79d5f5fb5 devel/entry.pl
+SHA1 d9ed050a14c64a535d2e3dd8d67958710c040cf4 devel/no-window.pl
 SHA1 f08a49b01e4be37d690c8788843d3d6db8afa75c devel/run.pl
-SHA1 9c05f4d967573422398bcf5939ff6bf2b29813ee examples/cursortype.pl
+SHA1 cbb0cd9a11d7efc399edc09cd823a6707b79360c examples/cursortype.pl
 SHA1 78da376911f53b37418fd45befbdb8a7361a252b examples/heart.pl
 SHA1 9d63fcab7927973d9cc170c8953ca5cf3f77e4a7 examples/misc.pl
 SHA1 98512ebb694985257201d19840b71c65e6cb18af examples/priority.pl
 SHA1 ff4d1286322f634d01d3ccf148aa5c9e349b0cbe examples/timebusy.pl
-SHA1 623a5451d5ffc1bee55082cc3da664d470054661 lib/Gtk2/Ex/WidgetCursor.pm
+SHA1 58474a145db93b87197289c8424ad67bd1a52507 lib/Gtk2/Ex/WidgetCursor.pm
 SHA1 f3edba372d2ff3a250822a5ae58fccbde91bfa88 t/WidgetCursor.t
+SHA1 18e606473b01cde76a7fd6a3bad081491b519347 t/busy-first.t
 SHA1 a661a39e55a4127aecb1b97a631c4f01f7dce8c6 t/pod.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.6 (GNU/Linux)
 
-iD8DBQFIG62zLFMCIV9q3ToRAo7yAJ46D2MWkd5VH4pxGYu/7bQ00mtvQwCeNeTD
-in+8FOOMO3Fjd/zFZdpxWj4=
-=zbp9
+iD8DBQFIK3NbLFMCIV9q3ToRAibPAJ0TcEK4Wi6xmfQxnbpQrdtKn0/U/QCghQNP
+auYzkZncjubGsSgrD5sRtxE=
+=LNIR
 -----END PGP SIGNATURE-----
