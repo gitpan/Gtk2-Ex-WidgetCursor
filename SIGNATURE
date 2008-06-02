@@ -15,12 +15,12 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 8624bcdae55baeef00cd11d5dfcfa60f68710a02 COPYING
-SHA1 96818753cedd0f9041001c5d2a1732e72c5bc85d Changes
-SHA1 a5bd904c2056432c6f1432b284a359655dc7ad80 MANIFEST
-SHA1 953cd0fae56b87536288a5efd25b889c5558181f META.yml
-SHA1 f0d281f0af60ff90147456efaba1d4baab4fa27a Makefile.PL
+SHA1 97daa585dcbc2149e27373ccbc0c0c410255b475 Changes
+SHA1 96662aa1c461c2bcbb5afeba0dd82be0f5492af5 MANIFEST
+SHA1 42c5af01a439bcbf7796501ac884242af8b80235 META.yml
+SHA1 6525b921e6825b0223a57b6091b3fb4334105fb5 Makefile.PL
 SHA1 1177f24de3e5ba5e74d025fd17421f9f5f96b023 README
-SHA1 c5bcaaaa9ff5518fa3684e29c6bf82b5497e37a2 debian/changelog
+SHA1 c255e9a5da95f50cec6d83c11a45dfe4ead900cd debian/changelog
 SHA1 1b6453892473a467d07372d45eb05abc2031647a debian/compat
 SHA1 00827f018ccb905fdb5a904269bf2e8a8ee3b021 debian/control
 SHA1 1c490ec2d7220e3fca1b7394a7783f4704ce897f debian/copyright
@@ -31,19 +31,20 @@ SHA1 a77ab489cc43fcbe955b3493881610e3b7148c2b devel/combo.pl
 SHA1 90f9283e3576f4336a3f4451f13e3ce79d5f5fb5 devel/entry.pl
 SHA1 d9ed050a14c64a535d2e3dd8d67958710c040cf4 devel/no-window.pl
 SHA1 f08a49b01e4be37d690c8788843d3d6db8afa75c devel/run.pl
+SHA1 0aeb7dc55e2aa6c5c3527bad3af321291513335d devel/unbusy-idle.pl
 SHA1 cbb0cd9a11d7efc399edc09cd823a6707b79360c examples/cursortype.pl
 SHA1 78da376911f53b37418fd45befbdb8a7361a252b examples/heart.pl
 SHA1 9d63fcab7927973d9cc170c8953ca5cf3f77e4a7 examples/misc.pl
 SHA1 98512ebb694985257201d19840b71c65e6cb18af examples/priority.pl
 SHA1 ff4d1286322f634d01d3ccf148aa5c9e349b0cbe examples/timebusy.pl
-SHA1 58474a145db93b87197289c8424ad67bd1a52507 lib/Gtk2/Ex/WidgetCursor.pm
-SHA1 f3edba372d2ff3a250822a5ae58fccbde91bfa88 t/WidgetCursor.t
+SHA1 bb5f347050091a0a6bd2131e595e4b43d30ce9ab lib/Gtk2/Ex/WidgetCursor.pm
+SHA1 9ced6fbb053b6b26f7aa9f19ba960d0d63e8090a t/WidgetCursor.t
 SHA1 18e606473b01cde76a7fd6a3bad081491b519347 t/busy-first.t
 SHA1 a661a39e55a4127aecb1b97a631c4f01f7dce8c6 t/pod.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.6 (GNU/Linux)
 
-iD8DBQFIK3NbLFMCIV9q3ToRAibPAJ0TcEK4Wi6xmfQxnbpQrdtKn0/U/QCghQNP
-auYzkZncjubGsSgrD5sRtxE=
-=LNIR
+iD8DBQFIQ0m9LFMCIV9q3ToRAjBBAKCUX/vWU2eYhOgRKPmcsyXgMJFIrQCeNm4N
+RTjmkg1AV2gyrJYkWUytLf8=
+=8vpi
 -----END PGP SIGNATURE-----

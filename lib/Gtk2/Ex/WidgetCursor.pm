@@ -22,7 +22,7 @@ use Gtk2;
 use List::Util;
 use Scalar::Util;
 
-our $VERSION = 2;
+our $VERSION = 3;
 
 # set this to 1 for some diagnostic prints
 use constant DEBUG => 0;
@@ -32,16 +32,15 @@ use constant DEBUG => 0;
 # Cribs on widgets using gdk_window_set_cursor directly:
 #
 # GtkAboutDialog  [not handled]
-#     Puts "email" and "link" tags on text in credits GtkTextView and then
-#     does set_cursor on entering or leaving those.
+#     Puts "email" and "link" tags on text in the credits GtkTextView and
+#     then does set_cursor on entering or leaving those.
 #
 # GtkCombo        [ok mostly]
 #     Does a single set_cursor for a 'top-left-arrow' on a GtkEventBox in
 #     its popup when realized.  We dig that out for include_children,
 #     primarily so a busy() shows the watch on the popup window if happens
-#     to be open at the time.  Of course GtkCombo is one of the
-#     ever-lengthening parade of working and well-defined widgets you're not
-#     meant to use any more.
+#     to be open.  Of course GtkCombo is one of the ever-lengthening parade
+#     of working and well-defined widgets you're not meant to use any more.
 #
 # GtkCurve        [not handled]
 #     Multiple set_cursor calls according to mode and motion.  A rarely used
@@ -238,7 +237,7 @@ sub _update_widget {
       return;
     }
 
-    if (my $win = _widget_window ($widget)) {
+    if (my $win = $widget->Gtk2_Ex_WidgetCursor_window) {
       my $cursor = undef;
 
       # hack to put Gtk2::Combo popup back to its normal GDK_TOP_LEFT_ARROW
@@ -254,7 +253,7 @@ sub _update_widget {
 
   # install wobj on this widget
 
-  my $win = _widget_window ($widget);
+  my $win = $widget->Gtk2_Ex_WidgetCursor_window;
   if (! $win) {
     if (DEBUG) { print "  not realized, defer setting\n"; }
     $widget->{__PACKAGE__,'realize_id'} ||=
@@ -287,40 +286,63 @@ sub _do_widget_realize {
   _update_widget ($widget);
 }
 
-# return the window in $widget we'll act on, incorporating hacks for core
-# classes with multiple windows
-sub _widget_window {
+# $widget->Gtk2_Ex_WidgetCursor_window() returns the window in $widget we'll
+# act on, incorporating hacks for core classes with multiple windows.
+#
+# default to $widget->window
+*Gtk2::Widget::Gtk2_Ex_WidgetCursor_window = \&Gtk2::Widget::window;
+
+# GtkTextView puts its insertion point cursor on its "text" window, so we
+# operate on that.
+#
+sub Gtk2::TextView::Gtk2_Ex_WidgetCursor_window {
   my ($widget) = @_;
-  if ($widget->isa ('Gtk2::TextView')) {
-    return $widget->get_window ('text');
+  return $widget->get_window ('text');
+}
+
+# GtkEntry has a window and then within that a subwindow just 4 pixels
+# smaller in height.  We act on the subwindow so as to override the
+# insertion point cursor it puts there.  Since the subwindow isn't a
+# documented feature check that it does, in fact, exist.
+#
+sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_window {
+  my ($widget) = @_;
+  my $win = $widget->window;
+  my ($subwin) = $win->get_children; # first child
+  if ($subwin) {
+    return $subwin;
+  } else {
+    return $widget->SUPER::Gtk2_Ex_WidgetCursor_window;
   }
-  my $win = $widget->window or return undef;
+}
 
-  if ($widget->isa('Gtk2::Entry')) {
-    #
-    # GtkEntry has a subwindow and we act on that.  Because that's not a
-    # documented feature we check that there is indeed a subwindow.
-    #
-    my ($subwin) = $win->get_children;
-    if ($subwin) { return $subwin; }
+# GtkButton is no-window but it keeps a secret input-only "event_window" to
+# see enter/leave, so we act on that.  Finding it is tricky because that
+# event_window field is private, but we can look through all the window
+# children for the one which maps to our button (via its userdata in the
+# usual window to widget event processing path).
+#
+# Cache the window against the widget to save repeating the search, but only
+# weak for when the button is unrealized.
+#
+sub Gtk2::Button::Gtk2_Ex_WidgetCursor_window {
+  my ($widget) = @_;
+  my $win = $widget->{__PACKAGE__,'event_window'};
+  if ($win) { return $win; }
 
-  } elsif ($widget->isa ('Gtk2::Button')) {
-    #
-    # GtkButton is no-window but it keeps a secret input-only "event_window"
-    # to see enter/leave, so we act on that.  Finding it is tricky because
-    # that event_window field is private, but we can look through all the
-    # window children for the one which maps to our button (via its userdata
-    # in the usual window to widget event processing path).
-    #
-    return ($widget->{__PACKAGE__,'event_window'} ||= do {
-      my $event = Gtk2::Gdk::Event->new ('expose');
-      List::Util::first { $event->window ($_);
-                          Gtk2->get_event_widget($event) == $widget
-                        } $win->get_children;
-    });
+  my $parent_win = $widget->window;
+  if (! $parent_win) { return undef; } # unrealized
+
+  my $event = Gtk2::Gdk::Event->new ('expose');
+  foreach my $win ($widget->window->get_children) {
+    $event->window ($win);
+    if (Gtk2->get_event_widget($event) == $widget) {
+      $widget->{__PACKAGE__,'event_window'} = $win;
+      Scalar::Util::weaken ($widget->{__PACKAGE__,'event_window'});
+      return $win;
+    }
   }
-
-  return $win;
+  return undef;
 }
 
 # Return true if $wobj is applicable to $widget, either because $widget is
@@ -346,7 +368,8 @@ sub cursor {
   if (! $self->{'active'} || _cursor_equal ($oldval, $newval)) { return; }
 
   foreach my $widget (@{$self->{'installed_widgets'}}) {
-    my $win = _widget_window ($widget) or next; # only realized widgets change
+    my $win = $widget->Gtk2_Ex_WidgetCursor_window
+      or next; # only realized widgets change
     if (DEBUG) { print "wobj cursor update $win\n"; }
     $win->set_cursor (_resolve_cursor ($self, $widget))
   }
@@ -395,7 +418,8 @@ sub add_widgets {
   }
 }
 
-# return an actual Gtk2::Gdk::Cursor from what may be only a string setting 
+# return an actual Gtk2::Gdk::Cursor from what may be only a string setting
+# in $wobj->{'cursor'}
 sub _resolve_cursor {
   my ($wobj, $widget) = @_;
   my $cursor = $wobj->{'cursor'};
@@ -409,7 +433,7 @@ sub _resolve_cursor {
     return $wobj->invisible_cursor ($widget);
 
   } else {
-    # string cursor name -- we only ever resolve" here when widget is
+    # string cursor name -- we only ever resolve here when widget is
     # realized, so get_display() won't be undef
     my $display = $widget->get_display;
     return Gtk2::Gdk::Cursor->new_for_display ($display, $cursor);
@@ -500,10 +524,10 @@ sub _do_busy_realize_emission {
   return 1; # stay connected
 }
 
-# Call unbusy() through $busy_wc to allow for hypothetical subclassing.
+# Call unbusy() through $busy_wc to allow for possible subclassing.
 # Using unbusy does a flush, which is often unnecessary but will ensure that
 # if there's lower priority idles still to run then our cursors go out
-# before any time they take.
+# before the time they take.
 #
 sub _busy_idle_handler {
   my ($widget) = @_;
@@ -536,13 +560,14 @@ sub unbusy {
 # need to flush)
 #
 sub _flush_mapped_widgets {
+  my @widget_list = @_;
   my %done;
   if (DEBUG) { print "_flush_mapped_widgets:"; }
-  foreach my $widget (@_) {
+  foreach my $widget (@widget_list) {
     if ($widget->mapped) {
       my $display = $widget->get_display;
       if (DEBUG) { print "  $display\n"; }
-      $done{$display} ||= do { $display->flush; 1 };
+      $done{$display+0} ||= do { $display->flush; 1 };
     }
   }
 }
@@ -556,23 +581,23 @@ sub invisible_cursor {
 
   if (! defined $target) {
     $display = Gtk2::Gdk::Display->get_default
-      || die "Gtk2::Ex::WidgetCursor->invisible_cursor(): no default display";
+      or die 'Gtk2::Ex::WidgetCursor->invisible_cursor(): no default display';
 
   } elsif ($target->isa('Gtk2::Gdk::Display')) {
     $display = $target;
 
   } else {
     $display = $target->get_display
-      || die "Gtk2::Ex::WidgetCursor->invisible_cursor(): get_display undef on $target";
+      or die "Gtk2::Ex::WidgetCursor->invisible_cursor(): get_display undef on $target";
   }
 
   return ($display->{__PACKAGE__,'invisible_cursor'}
           ||= do {
             if (DEBUG) { print "invisible_cursor new for $display\n"; }
             my $window = $display->get_default_screen->get_root_window;
-            my $mask = Gtk2::Gdk::Bitmap->create_from_data ($window, "\0", 1, 1);
+            my $mask = Gtk2::Gdk::Bitmap->create_from_data ($window,"\0",1,1);
             my $color = Gtk2::Gdk::Color->new (0,0,0);
-            Gtk2::Gdk::Cursor->new_from_pixmap ($mask,$mask, $color,$color, 0,0);
+            Gtk2::Gdk::Cursor->new_from_pixmap ($mask,$mask,$color,$color,0,0);
           });
 }
 

@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License along
 # with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile
@@ -29,11 +31,11 @@ WriteMakefile
 
    PREREQ_PM    => {
                     # any version should be ok
-                    Gtk2 => 0,
+                    'Gtk2' => 0,
 
                     # actually Gtk2 requires perl 5.8, which has
                     # Scalar::Util builtin already
-                    Scalar::Util => 0,
+                    'Scalar::Util' => 0,
                    },
 
    clean        => { FILES => "WidgetCursor.html" },

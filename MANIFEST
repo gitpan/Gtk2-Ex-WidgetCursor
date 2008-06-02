@@ -11,6 +11,7 @@ devel/combo.pl
 devel/entry.pl
 devel/no-window.pl
 devel/run.pl
+devel/unbusy-idle.pl
 examples/cursortype.pl
 examples/heart.pl
 examples/misc.pl
