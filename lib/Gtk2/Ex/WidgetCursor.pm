@@ -22,7 +22,7 @@ use Gtk2;
 use List::Util;
 use Scalar::Util;
 
-our $VERSION = 3;
+our $VERSION = 4;
 
 # set this to 1 for some diagnostic prints
 use constant DEBUG => 0;
@@ -307,7 +307,8 @@ sub Gtk2::TextView::Gtk2_Ex_WidgetCursor_window {
 #
 sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_window {
   my ($widget) = @_;
-  my $win = $widget->window;
+  my $win = $widget->window
+    or return undef; # if unrealized
   my ($subwin) = $win->get_children; # first child
   if ($subwin) {
     return $subwin;
@@ -330,8 +331,8 @@ sub Gtk2::Button::Gtk2_Ex_WidgetCursor_window {
   my $win = $widget->{__PACKAGE__,'event_window'};
   if ($win) { return $win; }
 
-  my $parent_win = $widget->window;
-  if (! $parent_win) { return undef; } # unrealized
+  my $parent_win = $widget->window
+    or return undef; # if unrealized
 
   my $event = Gtk2::Gdk::Event->new ('expose');
   foreach my $win ($widget->window->get_children) {

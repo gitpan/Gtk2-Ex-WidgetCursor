@@ -17,7 +17,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests => 16;
 
 use Scalar::Util;
 use Gtk2;
@@ -36,11 +36,12 @@ sub main_iterations {
 }
 
 SKIP: {
-  if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 13; }
+  if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 14; }
 
 
-  # In Perl-Gtk2 1.181 passing undef (ie. NULL) to Gtk2::Gdk::Display->open
-  # prints warnings, so do it with an actual $display_name string.
+  # In Perl-Gtk2 before 1.183, passing undef, ie. NULL, to
+  # Gtk2::Gdk::Display->open() prints warnings, so do it with an actual
+  # $display_name string.
   #
   my $default_display = Gtk2::Gdk::Display->get_default;
   my $display_name = $default_display->get_name;
@@ -156,6 +157,13 @@ SKIP: {
     ok (! $widget->Gtk2_Ex_WidgetCursor_window);
 
     $toplevel->destroy;
+  }
+
+  # GtkEntry when unrealized
+  {
+    my $widget = Gtk2::Entry->new;
+    my $win = $widget->Gtk2_Ex_WidgetCursor_window;
+    ok (! defined $win);
   }
 }
 

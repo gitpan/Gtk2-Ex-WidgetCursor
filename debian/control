@@ -3,7 +3,7 @@ Section: perl
 Priority: optional
 Build-Depends: cdbs, debhelper (>= 4)
 Maintainer: Kevin Ryde <user42@zip.com.au>
-Standards-Version: 3.7.3
+Standards-Version: 3.8.0
 Homepage: http://www.geocities.com/user42_kevin/gtk2-ex-widgetcursor/index.html
 Bugs: mailto:user42@zip.com.au
 
