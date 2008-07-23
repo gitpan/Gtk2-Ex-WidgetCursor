@@ -16,16 +16,20 @@ You should have received a copy of the GNU General Public License along
 with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version 1,  April 2008
-    - the first version
+Version 5,  July 2008
+    - fix weakening so garbage collection actually works
 
-Version 2,  May 2008
-    - use GtkButton private subwindow
-    - notice new toplevels during busy
+Version 4,  June 2008
+    - fix for unrealized Gtk2::Entry
 
 Version 3,  June 2008
     - let test suite cope with single-display gdk backends, as
       reported by Jamie Lahowetz
 
-Version 4,  June 2008
-    - fix for unrealized Gtk2::Entry
+Version 2,  May 2008
+    - use GtkButton private subwindow
+    - notice new toplevels during busy
+
+Version 1,  April 2008
+    - the first version
+

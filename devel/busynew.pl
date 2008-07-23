@@ -47,7 +47,7 @@ use Gtk2::Ex::WidgetCursor;
 my $toplevel = Gtk2::Window->new ('toplevel');
 $toplevel->set_name ("my_toplevel_1");
 $toplevel->signal_connect (destroy => sub {
-                             print "busynew.pl: quit\n";
+                             print __FILE__,": quit\n";
                              Gtk2->main_quit;
                            });
 

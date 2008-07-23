@@ -18,11 +18,12 @@
 package Gtk2::Ex::WidgetCursor;
 use strict;
 use warnings;
+use Carp;
 use Gtk2;
 use List::Util;
 use Scalar::Util;
 
-our $VERSION = 4;
+our $VERSION = 5;
 
 # set this to 1 for some diagnostic prints
 use constant DEBUG => 0;
@@ -102,8 +103,8 @@ use constant DEBUG => 0;
 # priority
 #
 # Elements are weakened so they don't keep the objects alive.  The DESTROY
-# method strips undefs from here, but not sure if undef could still be seen
-# in here by certain funcs at certain times.
+# method strips elements and undefs from here, but not sure if undef could
+# still be seen in here by certain funcs at certain times.
 #
 my @wobjs = ();
 
@@ -138,9 +139,18 @@ sub new {
 sub DESTROY {
   my ($self) = @_;
   if (DEBUG) { print "DESTROY $self\n"; }
-  @wobjs = grep {defined $_ && $_ != $self} @wobjs;
+  _splice_out (\@wobjs, $self);
   if ($self->{'active'}) {
     _wobj_deactivated ($self);
+  }
+}
+
+sub _splice_out {
+  my ($aref, $target) = @_;
+  for (my $i = 0; $i < @$aref; $i++) {
+    if (! defined $aref->[$i] || $aref->[$i] == $target) {
+      splice @$aref, $i,1;
+    }
   }
 }
 
@@ -181,7 +191,8 @@ sub _wobj_activated {
     my %done;
     foreach my $wobj (@wobjs) {
       foreach my $widget (@{$wobj->{'widgets'}}) {
-        $done{$widget} ||= do { _update_widget ($widget); 1 };
+        if (! $widget) { next; } # possible undef by weakening
+        $done{$widget+0} ||= do { _update_widget ($widget); 1 };
       }
     }
 
@@ -194,7 +205,7 @@ sub _wobj_activated {
         if ($widget->isa('Gtk2::Entry')
             || $widget->isa('Gtk2::TextView')
             || _widget_is_combo_eventbox ($widget)) {
-          $done{$widget} ||= do { _update_widget ($widget); 1 };
+          $done{$widget+0} ||= do { _update_widget ($widget); 1 };
         }
       }
     }
@@ -217,14 +228,24 @@ sub _update_widget {
   my $wobj = List::Util::first
     { $_->{'active'} && _wobj_applies_to_widget($_,$widget)} @wobjs;
 
-  my $old_wobj = $widget->{__PACKAGE__,'installed'};
-  if (DEBUG) { print "  wobj was ",$old_wobj||'undef',
-                 " now ",$wobj||'undef',"\n"; }
+  my $old_wobj = $widget->{__PACKAGE__.'.installed'};
+  if (DEBUG) { print "  wobj was ",
+                 defined $old_wobj
+                   ? "$old_wobj=".($old_wobj->{'cursor'}||'undef') : 'undef',
+                     " now ",
+                       defined $wobj
+                         ? "$wobj=".($wobj->{'cursor'}||'undef') : 'undef',
+                           "\n"; }
   if (($wobj||0) == ($old_wobj||0)) { return; } # unchanged
+
+  # forget this widget under $old_wobj
+  if ($old_wobj) {
+    _splice_out ($old_wobj->{'installed_widgets'}, $widget);
+  }
 
   if (! $wobj) {
     # no wobj applies to this widget any more
-    delete $widget->{__PACKAGE__,'installed'};
+    delete $widget->{__PACKAGE__.'.installed'};
 
     # nasty hack to put Gtk2::Entry or Gtk2::TextView back to their
     # GDK_XTERM insertion bar when sensitive and no more WidgetCursor
@@ -245,7 +266,8 @@ sub _update_widget {
         $cursor = Gtk2::Gdk::Cursor->new_for_display ($widget->get_display,
                                                       'top-left-arrow');
       }
-      if (DEBUG) { print "  set_cursor back to ",$cursor||'undef',"\n"; }
+      if (DEBUG) { print "  set_cursor back to ",
+                     defined $cursor ? $cursor->type : 'undef',"\n"; }
       $win->set_cursor ($cursor);
     }
     return;
@@ -256,7 +278,7 @@ sub _update_widget {
   my $win = $widget->Gtk2_Ex_WidgetCursor_window;
   if (! $win) {
     if (DEBUG) { print "  not realized, defer setting\n"; }
-    $widget->{__PACKAGE__,'realize_id'} ||=
+    $widget->{__PACKAGE__.'.realize_id'} ||=
       $widget->signal_connect (realize => \&_do_widget_realize);
     return;
   }
@@ -265,15 +287,17 @@ sub _update_widget {
   { my $aref = $wobj->{'installed_widgets'};
     push @$aref, $widget;
     Scalar::Util::weaken ($aref->[-1]);
+    if (DEBUG) { print "  gives installed_widgets ",join(' ',@$aref),"\n"; }
   }
 
   # note this wobj under the widget
-  $widget->{__PACKAGE__,'installed'} = $wobj;
-  Scalar::Util::weaken ($widget->{__PACKAGE__,'installed'});
+  $widget->{__PACKAGE__.'.installed'} = $wobj;
+  Scalar::Util::weaken ($widget->{__PACKAGE__.'.installed'});
 
   # and finally actually set the cursor
   my $cursor = _resolve_cursor ($wobj, $widget);
-  if (DEBUG) { print "  set_cursor ",$cursor||'undef',"\n"; }
+  if (DEBUG) { print "  set_cursor ",
+                 defined $cursor ? $cursor->type : 'undef',"\n"; }
   $win->set_cursor ($cursor);
 }
 
@@ -282,7 +306,7 @@ sub _do_widget_realize {
   my ($widget) = @_;
   if (DEBUG) { print "now realized\n"; }
   $widget->signal_handler_disconnect
-    (delete $widget->{__PACKAGE__,'realize_id'});
+    (delete $widget->{__PACKAGE__.'.realize_id'});
   _update_widget ($widget);
 }
 
@@ -308,7 +332,7 @@ sub Gtk2::TextView::Gtk2_Ex_WidgetCursor_window {
 sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_window {
   my ($widget) = @_;
   my $win = $widget->window
-    or return undef; # if unrealized
+    || return undef; # if unrealized
   my ($subwin) = $win->get_children; # first child
   if ($subwin) {
     return $subwin;
@@ -328,18 +352,18 @@ sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_window {
 #
 sub Gtk2::Button::Gtk2_Ex_WidgetCursor_window {
   my ($widget) = @_;
-  my $win = $widget->{__PACKAGE__,'event_window'};
+  my $win = $widget->{__PACKAGE__.'.event_window'};
   if ($win) { return $win; }
 
   my $parent_win = $widget->window
-    or return undef; # if unrealized
+    || return undef; # if unrealized
 
   my $event = Gtk2::Gdk::Event->new ('expose');
   foreach my $win ($widget->window->get_children) {
     $event->window ($win);
     if (Gtk2->get_event_widget($event) == $widget) {
-      $widget->{__PACKAGE__,'event_window'} = $win;
-      Scalar::Util::weaken ($widget->{__PACKAGE__,'event_window'});
+      $widget->{__PACKAGE__.'.event_window'} = $win;
+      Scalar::Util::weaken ($widget->{__PACKAGE__.'.event_window'});
       return $win;
     }
   }
@@ -370,9 +394,8 @@ sub cursor {
 
   foreach my $widget (@{$self->{'installed_widgets'}}) {
     my $win = $widget->Gtk2_Ex_WidgetCursor_window
-      or next; # only realized widgets change
-    if (DEBUG) { print "wobj cursor update $win\n"; }
-    $win->set_cursor (_resolve_cursor ($self, $widget))
+      || next; # only realized widgets change
+    $win->set_cursor (_resolve_cursor ($self, $widget));
   }
 }
 
@@ -540,10 +563,19 @@ sub _busy_idle_handler {
 
 sub unbusy {
   my ($class) = @_;
+
+  # Some freaky stuff can happen during perl "global destruction" with
+  # classes being destroyed and disconecting emission hooks on their own,
+  # provoking warnings from code like the following that does a cleanup
+  # itself.  Fairly confident that doesn't apply to Gtk2::Widget, it
+  # probably, hopefully, never gets destroyed, or at least not until well
+  # after any Perl code might get a chance to call unbusy().
+  #
   if ($realize_id) {
     Gtk2::Widget->signal_remove_emission_hook (realize => $realize_id);
     $realize_id = undef;
   }
+
   if ($busy_id) {
     Glib::Source->remove ($busy_id);
     $busy_id = undef;
@@ -567,8 +599,11 @@ sub _flush_mapped_widgets {
   foreach my $widget (@widget_list) {
     if ($widget->mapped) {
       my $display = $widget->get_display;
-      if (DEBUG) { print "  $display\n"; }
-      $done{$display+0} ||= do { $display->flush; 1 };
+      $done{$display+0} ||= do {
+        if (DEBUG) { print "  $display\n"; }
+        $display->flush;
+        1
+      };
     }
   }
 }
@@ -582,17 +617,17 @@ sub invisible_cursor {
 
   if (! defined $target) {
     $display = Gtk2::Gdk::Display->get_default
-      or die 'Gtk2::Ex::WidgetCursor->invisible_cursor(): no default display';
+      || croak 'invisible_cursor(): no default display';
 
   } elsif ($target->isa('Gtk2::Gdk::Display')) {
     $display = $target;
 
   } else {
     $display = $target->get_display
-      or die "Gtk2::Ex::WidgetCursor->invisible_cursor(): get_display undef on $target";
+      || croak "invisible_cursor(): get_display undef on $target";
   }
 
-  return ($display->{__PACKAGE__,'invisible_cursor'}
+  return ($display->{__PACKAGE__.'.invisible_cursor'}
           ||= do {
             if (DEBUG) { print "invisible_cursor new for $display\n"; }
             my $window = $display->get_default_screen->get_root_window;

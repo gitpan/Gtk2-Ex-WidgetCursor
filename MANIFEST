@@ -6,6 +6,7 @@ debian/control
 debian/copyright
 debian/rules
 debian/watch
+devel/busydestroy.pl
 devel/busynew.pl
 devel/combo.pl
 devel/entry.pl

@@ -23,8 +23,8 @@ use Scalar::Util;
 use Gtk2;
 use Gtk2::Ex::WidgetCursor;
 
-ok ($Gtk2::Ex::WidgetCursor::VERSION >= 3);
-ok (Gtk2::Ex::WidgetCursor->VERSION >= 3);
+ok ($Gtk2::Ex::WidgetCursor::VERSION >= 5);
+ok (Gtk2::Ex::WidgetCursor->VERSION >= 5);
 
 sub main_iterations {
   my $count = 0;
@@ -51,7 +51,7 @@ SKIP: {
       Gtk2::Ex::WidgetCursor->invisible_cursor());
 
   # different invisible object on different displays
-  SKIP: {
+ SKIP: {
     my $d1 = $default_display;
     my $d2 = Gtk2::Gdk::Display->open ($display_name);
     if ($d1 == $d2) {
@@ -64,7 +64,7 @@ SKIP: {
 
   # an invisible cursor hung on a display doesn't keep that object alive
   # forever
-  SKIP: {
+ SKIP: {
     require Scalar::Util;
     my $d = Gtk2::Gdk::Display->open ($display_name);
     if ($d == $default_display) {
@@ -75,7 +75,7 @@ SKIP: {
     Scalar::Util::weaken ($weak);
     $d->close;
     $d = undef;
-    ok (! defined $weak);
+    is ($weak, undef);
   }
 
 
@@ -83,10 +83,19 @@ SKIP: {
   {
     my $widget = Gtk2::Label->new ('hi');
     my $wobj = Gtk2::Ex::WidgetCursor->new (widget => $widget);
-    my $weak = $wobj;
-    Scalar::Util::weaken ($weak);
-    $wobj = undef;
-    ok (! defined $weak);
+    Scalar::Util::weaken ($wobj);
+    is ($wobj, undef);
+  }
+
+  # two WidgetCursors should be garbage collected
+  {
+    my $widget = Gtk2::Label->new ('hi');
+    my $wobj1 = Gtk2::Ex::WidgetCursor->new (widget => $widget);
+    my $wobj2 = Gtk2::Ex::WidgetCursor->new (widget => $widget);
+    Scalar::Util::weaken ($wobj1);
+    Scalar::Util::weaken ($wobj2);
+    is ($wobj1, undef);
+    is ($wobj2, undef);
   }
 
   # WidgetCursor on a realized widget should be garbage collected
@@ -94,20 +103,16 @@ SKIP: {
     my $widget = Gtk2::Window->new ('toplevel');
     $widget->show;
     my $wobj = Gtk2::Ex::WidgetCursor->new (widget => $widget);
-    my $weak = $wobj;
-    Scalar::Util::weaken ($weak);
-    $wobj = undef;
-    ok (! defined $weak);
+    Scalar::Util::weaken ($wobj);
+    is ($wobj, undef);
   }
 
   # WidgetCursor doesn't keep widget alive forever
   {
     my $widget = Gtk2::Label->new ('hi');
     my $wobj = Gtk2::Ex::WidgetCursor->new (widget => $widget);
-    my $weak = $widget;
-    Scalar::Util::weaken ($weak);
-    $widget = undef;
-    ok (! defined $weak);
+    Scalar::Util::weaken ($widget);
+    is ($widget, undef);
   }
 
   # WidgetCursor doesn't keep widgets array alive forever
@@ -116,15 +121,11 @@ SKIP: {
     my $widget2 = Gtk2::Label->new ('bye');
     my $wobj = Gtk2::Ex::WidgetCursor->new (widgets => [$widget1, $widget2]);
 
-    my $weak1 = $widget1;
-    Scalar::Util::weaken ($weak1);
-    $widget1 = undef;
-    ok (! defined $weak1);
+    Scalar::Util::weaken ($widget1);
+    is ($widget1, undef);
 
-    my $weak2 = $widget2;
-    Scalar::Util::weaken ($weak2);
-    $widget2 = undef;
-    ok (! defined $weak2);
+    Scalar::Util::weaken ($widget2);
+    is ($widget2, undef);
   }
 
   # WidgetCursor add_widgets doesn't keep widget alive forever
@@ -132,29 +133,31 @@ SKIP: {
     my $widget = Gtk2::Label->new ('hi');
     my $wobj = Gtk2::Ex::WidgetCursor->new;
     $wobj->add_widgets ($widget);
-    my $weak = $widget;
-    Scalar::Util::weaken ($weak);
-    $widget = undef;
-    ok (! defined $weak);
+    Scalar::Util::weaken ($widget);
+    is ($widget, undef);
   }
 
   # GtkButton special finding of event window
   {
     my $toplevel = Gtk2::Window->new ('toplevel');
-    my $widget = Gtk2::Button->new ('hi');
-    $toplevel->add ($widget);
+    my $button = Gtk2::Button->new ('hi');
+    $toplevel->add ($button);
 
-    $widget->realize;
-    ok ($widget->Gtk2_Ex_WidgetCursor_window);
+    my $ewkey = 'Gtk2::Ex::WidgetCursor.event_window';
 
-    my $wobj = Gtk2::Ex::WidgetCursor->new (widget => $widget,
+    $button->realize;
+    isa_ok ($button->Gtk2_Ex_WidgetCursor_window, 'Gtk2::Gdk::Window');
+
+    my $wobj = Gtk2::Ex::WidgetCursor->new (widget => $button,
                                             active => 1);
-    ok ($widget->{'Gtk2::Ex::WidgetCursor','event_window'});
+    isa_ok ($button->{$ewkey}, 'Gtk2::Gdk::Window');
 
-    $widget->unrealize;
+    $button->unrealize;
     main_iterations();
-    ok (! $widget->{'Gtk2::Ex::WidgetCursor','event_window'});
-    ok (! $widget->Gtk2_Ex_WidgetCursor_window);
+    ok (! defined $button->{$ewkey},  # only weakened away, not !exists()
+        'GtkButton lose cached event_window on unrealize');
+    my $win = $button->Gtk2_Ex_WidgetCursor_window;
+    is ($win, undef, 'GtkButton no window when unrealized');
 
     $toplevel->destroy;
   }
@@ -163,7 +166,7 @@ SKIP: {
   {
     my $widget = Gtk2::Entry->new;
     my $win = $widget->Gtk2_Ex_WidgetCursor_window;
-    ok (! defined $win);
+    is ($win, undef, 'GtkEntry no window when unrealized');
   }
 }
 

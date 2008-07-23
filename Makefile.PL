@@ -39,14 +39,25 @@ WriteMakefile
                    },
 
    clean        => { FILES => "WidgetCursor.html" },
+
+   EXTRA_META => <<'HERE',
+no_index:
+    directory:
+        - devel
+resources:
+    homepage: http://www.geocities.com/user42_kevin/gtk2-ex-widgetcursor/index.html
+HERE
   );
 
 sub MY::postamble {
   return <<'MAKE_FRAG';
 
+CHECKFILES = $(TO_INST_PM) t/*.t examples/*.pl devel/*.pl
 lint:
-	perl -MO=Lint lib/Gtk2/Ex/WidgetCursor.pm
-	podchecker lib/Gtk2/Ex/WidgetCursor.pm
+	perl -MO=Lint $(CHECKFILES)
+	podchecker    $(CHECKFILES)
+pc:
+	perlcritic $(CHECKFILES)
 
 myman:
 	mv MANIFEST MANIFEST.old
@@ -59,7 +70,7 @@ WidgetCursor.html: lib/Gtk2/Ex/WidgetCursor.pm Makefile
 
 # find files in the dist with mod times this year, but without this year in
 # the copyright line
-copyright-years-check: Gtk2-Ex-WidgetCursor-$(VERSION).tar.gz
+copyright-years-check:
 	year=`date +%Y`; \
 	tar tvfz Gtk2-Ex-WidgetCursor-$(VERSION).tar.gz \
 	| grep $$year- \
@@ -86,6 +97,16 @@ copyright-years-check: Gtk2-Ex-WidgetCursor-$(VERSION).tar.gz
 debug-constants-check:
 	if egrep -n 'DEBUG => [^0]' $(TO_INST_PM); then exit 1; else exit 0; fi
 
+diff-prev:
+	rm -rf diff.tmp
+	mkdir diff.tmp
+	cd diff.tmp \
+	&& tar xfz ../$(NAME)-`expr $(VERSION) - 1`.tar.gz \
+	&& tar xfz ../$(NAME)-$(VERSION).tar.gz
+	-cd diff.tmp; diff -ur $(NAME)-`expr $(VERSION) - 1` \
+	                       $(NAME)-$(VERSION) >tree.diff
+	-less diff.tmp/tree.diff
+	rm -rf diff.tmp
 
 MAKE_FRAG
 }

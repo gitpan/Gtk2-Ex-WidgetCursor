@@ -187,6 +187,60 @@ use Gtk2::Ex::WidgetCursor;
     $vbox->pack_start ($button, 0, 0, 0);
   }
   {
+    my $button = Gtk2::Button->new_with_label ("Pointer Grab");
+    $button->signal_connect
+      (clicked => sub {
+         my $event = Gtk2->get_current_event;
+         my $window = $area->window;
+         my $event_mask = [];
+         my $confine_to = undef;
+         my $cursor = undef;
+         my $time = $event->time;
+
+         print "$window, 1, $event_mask, $confine_to, $cursor, $time\n";
+         my $status = Gtk2::Gdk->pointer_grab
+           ($window, 1, $event_mask, $confine_to, $cursor, $time);
+         print __FILE__,": grab $status\n";
+
+       });
+    $vbox->pack_start ($button, 0, 0, 0);
+  }
+  {
+    my $screen = $toplevel->get_screen;
+    my $confine_win = Gtk2::Gdk::Window->new
+      ($screen->get_root_window,
+       { window_type => 'temp',
+         wclass      => 'GDK_INPUT_ONLY',
+         x           => $screen->get_width / 2,
+         y           => $screen->get_height / 2,
+         width       => $screen->get_width / 2,
+         height      => $screen->get_height / 2,
+         override_redirect => 1 });
+
+    my $button = Gtk2::Button->new_with_label ("Confined Grab");
+    $button->signal_connect
+      (clicked => sub {
+         my $event = Gtk2->get_current_event;
+         my $window = $area->window;
+         my $event_mask = [];
+         my $cursor = undef;
+         my $time = $event->time;
+         $confine_win->show;
+
+         my $status = Gtk2::Gdk->pointer_grab
+           ($window, 1, $event_mask, $confine_win, $cursor, $time);
+         print __FILE__,": grab $status\n";
+
+       });
+    $vbox->pack_start ($button, 0, 0, 0);
+  }
+  Gtk2->key_snooper_install
+    (sub {
+       print __FILE__,": pointer_ungrab\n";
+       Gtk2::Gdk->pointer_ungrab (0);
+     });
+
+  {
     my $combobox = Gtk2::ComboBox->new_text;
     $vbox->pack_start ($combobox, 1,1,0);
     foreach ('one', 'two', 'three', 'four') {
@@ -223,7 +277,7 @@ foreach my $widget (Gtk2::Window->list_toplevels) {
   print "  $widget  ", $widget->get_name, "\n";
 
   if ($widget->get_name =~ /Gtk/) {
-    foreach my $widget (Gtk2::Ex::WidgetCursor::_container_children_recursively ($widget)) {
+    foreach my $widget (Gtk2::Ex::WidgetCursor::_container_recursively ($widget)) {
       print "    $widget  ", $widget->get_name, "\n";
     }
   }
