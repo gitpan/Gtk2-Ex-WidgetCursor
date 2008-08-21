@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 # Copyright 2007, 2008 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
@@ -17,14 +19,14 @@
 
 use strict;
 use warnings;
-use Test::More tests => 16;
+use Test::More tests => 17;
 
 use Scalar::Util;
 use Gtk2;
 use Gtk2::Ex::WidgetCursor;
 
-ok ($Gtk2::Ex::WidgetCursor::VERSION >= 5);
-ok (Gtk2::Ex::WidgetCursor->VERSION >= 5);
+ok ($Gtk2::Ex::WidgetCursor::VERSION >= 6);
+ok (Gtk2::Ex::WidgetCursor->VERSION  >= 6);
 
 sub main_iterations {
   my $count = 0;
@@ -36,7 +38,7 @@ sub main_iterations {
 }
 
 SKIP: {
-  if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 14; }
+  if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 15; }
 
 
   # In Perl-Gtk2 before 1.183, passing undef, ie. NULL, to
@@ -47,8 +49,8 @@ SKIP: {
   my $display_name = $default_display->get_name;
 
   # same invisible object on repeat calls
-  is (Gtk2::Ex::WidgetCursor->invisible_cursor(),
-      Gtk2::Ex::WidgetCursor->invisible_cursor());
+  is (Gtk2::Ex::WidgetCursor->invisible_cursor,
+      Gtk2::Ex::WidgetCursor->invisible_cursor);
 
   # different invisible object on different displays
  SKIP: {
@@ -137,36 +139,41 @@ SKIP: {
     is ($widget, undef);
   }
 
-  # GtkButton special finding of event window
+  # add_widgets with weakened undefs in wobj
   {
-    my $toplevel = Gtk2::Window->new ('toplevel');
-    my $button = Gtk2::Button->new ('hi');
-    $toplevel->add ($button);
+    my $widget = Gtk2::Label->new ('hi');
+    my $wobj = Gtk2::Ex::WidgetCursor->new (widgets => [ $widget ]);
+    $widget = Gtk2::Label->new ('bye');
+    $wobj->add_widgets ($widget);
+  }
 
-    my $ewkey = 'Gtk2::Ex::WidgetCursor.event_window';
+  # GtkButton when unrealized
+  {
+    my $widget = Gtk2::Button->new;
+    my @windows = grep {defined} $widget->Gtk2_Ex_WidgetCursor_windows;
+    is_deeply (\@windows, [], ref($widget).' no window when unrealized');
+  }
 
-    $button->realize;
-    isa_ok ($button->Gtk2_Ex_WidgetCursor_window, 'Gtk2::Gdk::Window');
-
-    my $wobj = Gtk2::Ex::WidgetCursor->new (widget => $button,
-                                            active => 1);
-    isa_ok ($button->{$ewkey}, 'Gtk2::Gdk::Window');
-
-    $button->unrealize;
-    main_iterations();
-    ok (! defined $button->{$ewkey},  # only weakened away, not !exists()
-        'GtkButton lose cached event_window on unrealize');
-    my $win = $button->Gtk2_Ex_WidgetCursor_window;
-    is ($win, undef, 'GtkButton no window when unrealized');
-
-    $toplevel->destroy;
+  # GtkTextView when unrealized
+  {
+    my $widget = Gtk2::TextView->new;
+    my @windows = grep {defined} $widget->Gtk2_Ex_WidgetCursor_windows;
+    is_deeply (\@windows, [], ref($widget).' no window when unrealized');
   }
 
   # GtkEntry when unrealized
   {
     my $widget = Gtk2::Entry->new;
-    my $win = $widget->Gtk2_Ex_WidgetCursor_window;
-    is ($win, undef, 'GtkEntry no window when unrealized');
+    my @windows = grep {defined} $widget->Gtk2_Ex_WidgetCursor_windows;
+    is_deeply (\@windows, [], ref($widget).' no window when unrealized');
+  }
+
+  # GtkSpinButton when unrealized
+  {
+    my $adj = Gtk2::Adjustment->new (0, -100, 100, 1, 10, 10);
+    my $widget = Gtk2::SpinButton->new ($adj, 10, 0);
+    my @windows = grep {defined} $widget->Gtk2_Ex_WidgetCursor_windows;
+    is_deeply (\@windows, [], ref($widget).' no window when unrealized');
   }
 }
 

@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Gtk2-Ex-WidgetCursor
-version:             5
+version:             6
 abstract:            Mouse pointer cursor management for Gtk widgets.
 license:             gpl
 author:              

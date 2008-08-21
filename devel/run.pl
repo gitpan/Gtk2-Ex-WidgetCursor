@@ -197,7 +197,10 @@ use Gtk2::Ex::WidgetCursor;
          my $cursor = undef;
          my $time = $event->time;
 
-         print "$window, 1, $event_mask, $confine_to, $cursor, $time\n";
+         print "$window, 1, $event_mask, ",
+           defined $confine_to ? $confine_to : 'undef',",",
+             " ", defined $cursor ? $cursor : 'undef',",",
+               " $time\n";
          my $status = Gtk2::Gdk->pointer_grab
            ($window, 1, $event_mask, $confine_to, $cursor, $time);
          print __FILE__,": grab $status\n";

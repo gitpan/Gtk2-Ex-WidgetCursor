@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 # Copyright 2008 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
@@ -29,6 +31,6 @@ SKIP: {
   # go busy with no widgets, exercising a workaround for Gtk2-Perl 1.181
   Gtk2::Ex::WidgetCursor->busy;
   ok (1);
-};
+}
 
 exit 0;

@@ -23,7 +23,7 @@ use Gtk2;
 use List::Util;
 use Scalar::Util;
 
-our $VERSION = 5;
+our $VERSION = 6;
 
 # set this to 1 for some diagnostic prints
 use constant DEBUG => 0;
@@ -36,30 +36,32 @@ use constant DEBUG => 0;
 #     Puts "email" and "link" tags on text in the credits GtkTextView and
 #     then does set_cursor on entering or leaving those.
 #
-# GtkCombo        [ok mostly]
+# GtkCombo        [ok mostly, with a hack]
 #     Does a single set_cursor for a 'top-left-arrow' on a GtkEventBox in
 #     its popup when realized.  We dig that out for include_children,
-#     primarily so a busy() shows the watch on the popup window if happens
-#     to be open.  Of course GtkCombo is one of the ever-lengthening parade
-#     of working and well-defined widgets you're not meant to use any more.
+#     primarily so a busy() shows the watch on the popup window if it
+#     happens to be open.  Of course GtkCombo is one of the ever-lengthening
+#     parade of working and well-defined widgets which Gtk says you're not
+#     meant to use any more.
 #
 # GtkCurve        [not handled]
 #     Multiple set_cursor calls according to mode and motion.  A rarely used
 #     widget so ignore it for now.
 #
-# GtkEntry        [ok]
-#     Uses a private GdkWindow subwindow with a GDK_CURSOR_XTERM when
-#     sensitive.  That window isn't presented in the public fields/functions
-#     but we can dig it out with $win->get_children.  We treat that
-#     subwindow as the widget window, and then do a toggle sensitive to get
-#     back the insertion cursor when no more WidgetCursor settings.
-#     gdk_window_get_children() is fast since Gtk maintains the list of
-#     children itself (as opposed to the way plain Xlib queries the server).
+# GtkEntry        [ok, with a hack]
+#     An Entry uses a private GdkWindow subwindow 4 pixels smaller than the
+#     main and sets a GDK_CURSOR_XTERM there when sensitive.  That window
+#     isn't presented in the public fields/functions but can be dug out from
+#     $win->get_children.  We set the cursor on both the main window and the
+#     subwindow then have a hack to restore the insertion point cursor on
+#     the latter when done.  Getting the subwindow is fast since Gtk
+#     maintains the list of children for gdk_window_get_children() itself
+#     (as opposed to the way plain Xlib queries the server).
 #
-#     The subwindow is 4 pixels smaller in height than the enclosing one, so
-#     to be perfect we would have to set both windows.  For now the
-#     enclosing window ends up inheriting its parent (which isn't too
-#     terrible for just 4 pixels).
+#     The Entry can be made to restore the insertion cursor by toggling
+#     'sensitive'.  Hard to know which is worse: toggling sensitive
+#     needlessly, or forcibly setting the cursor back.  The latter is needed
+#     for the SpinButton subclass below, so it's easier to do that.
 #
 # GtkFileChooser  [probably ok]
 #     Sets a GDK_CURSOR_WATCH temporarily when busy.  That probably kills
@@ -71,11 +73,15 @@ use constant DEBUG => 0;
 #     selectable text, or something.  This misses out on include_children
 #     for now.
 #
-# GtkLinkButton   [not handled]
-#     A GtkButton subclass which does set_cursor on its windowed parent for
-#     enter and leave events on its input-only event window.  This makes a
-#     mess of any WidgetCursor on that parent.  Probably have to try to
-#     catch leave events on linkbuttons and fixup the parent window.
+# GtkLinkButton   [not very good]
+#     A GtkButton subclass which does 'hand' set_cursor on its windowed
+#     parent for enter and leave events on its input-only event window.
+#
+#     The cursor applied to the event window (per GtkButton above) trumps
+#     the hand on the parent, so that gets the right effect.  But any
+#     WidgetCursor setting on the parent is lost when LinkButton turns off
+#     its hand under a leave-event.  Might have to make a hack connecting to
+#     leave-event and re-applying the parent window.
 #
 # GtkPaned        [not handled]
 #     Puts a cursor on its GdkWindow handle when sensitive.  Not covered by
@@ -85,14 +91,30 @@ use constant DEBUG => 0;
 #     A GDK_WATCH when busy, similar to GtkFileChooser above.  Hopefully ok
 #     most of the time with no special attention.
 #
+# GtkSpinButton   [imperfect]
+#     Subclass of GtkEntry, but adds some nonsense with a "panel" window
+#     overlaid on the normal Entry widget window (the main outer one).  It
+#     can be dug out by looking for sibling windows (with events directed to
+#     the widget), and then operate on three windows: the Entry main, the
+#     Entry 4-pixel smaller subwindow and the SpinButton panel sibling.
+#
+#     Toggling sensitive doesn't work to restore the insertion point cursor
+#     for a SpinButton, unlike its Entry superclass.  Something not chaining
+#     up presumably, so the only choice is to forcibly put the cursor back.
+#
 # GtkStatusBar    [not handled]
 #     A cursor on its private grip GdkWindow.
 #
 # GtkTextView     [ok]
-#     Sets a GDK_XTERM insertion point cursor on its "text window", when
-#     sensitive.  We treat that as its window and override as necessary,
-#     then trick it into putting back the insertion point by toggling
-#     "sensitive".
+#     Sets a GDK_XTERM insertion point cursor on its get_window('text')
+#     sub-window when sensitive.  We operate on the get_window('widget') and
+#     get_window('text') both.
+#
+#     Toggling sensitive will put back the insertion point cursor, like for
+#     a GtkEntry above, and like for the Entry it's hard to know whether
+#     it's worse to toggle sensitive or forcibly set back the cursor.  For
+#     now the latter can share code with Entry and SpinButton and thus is
+#     what's used.
 #
 
 
@@ -247,26 +269,15 @@ sub _update_widget {
     # no wobj applies to this widget any more
     delete $widget->{__PACKAGE__.'.installed'};
 
-    # nasty hack to put Gtk2::Entry or Gtk2::TextView back to their
-    # GDK_XTERM insertion bar when sensitive and no more WidgetCursor
-    # settings
-    if (($widget->isa('Gtk2::Entry') || $widget->isa('Gtk2::TextView'))
-        && $widget->sensitive) {
-      if (DEBUG) { print "  toggle sensitive\n"; }
-      $widget->set_sensitive(0);
-      $widget->set_sensitive(1);
-      return;
-    }
-
-    if (my $win = $widget->Gtk2_Ex_WidgetCursor_window) {
-      my $cursor = undef;
-
-      # hack to put Gtk2::Combo popup back to its normal GDK_TOP_LEFT_ARROW
-      if (_widget_is_combo_eventbox ($widget)) {
-        $cursor = Gtk2::Gdk::Cursor->new_for_display ($widget->get_display,
-                                                      'top-left-arrow');
-      }
-      if (DEBUG) { print "  set_cursor back to ",
+    my ($hack_win, $hack_cursor) = $widget->Gtk2_Ex_WidgetCursor_hack_restore;
+    $hack_win ||= 0; # avoid undef
+    foreach my $win ($widget->Gtk2_Ex_WidgetCursor_windows) {
+      $win || next;
+      my $cursor = ($win == $hack_win
+                    ? Gtk2::Gdk::Cursor->new_for_display ($widget->get_display,
+                                                          $hack_cursor)
+                    : undef);
+      if (DEBUG) { print "  set_cursor $win back to ",
                      defined $cursor ? $cursor->type : 'undef',"\n"; }
       $win->set_cursor ($cursor);
     }
@@ -275,8 +286,8 @@ sub _update_widget {
 
   # install wobj on this widget
 
-  my $win = $widget->Gtk2_Ex_WidgetCursor_window;
-  if (! $win) {
+  my @windows = $widget->Gtk2_Ex_WidgetCursor_windows;
+  if (! defined $windows[0]) {
     if (DEBUG) { print "  not realized, defer setting\n"; }
     $widget->{__PACKAGE__.'.realize_id'} ||=
       $widget->signal_connect (realize => \&_do_widget_realize);
@@ -296,9 +307,12 @@ sub _update_widget {
 
   # and finally actually set the cursor
   my $cursor = _resolve_cursor ($wobj, $widget);
-  if (DEBUG) { print "  set_cursor ",
-                 defined $cursor ? $cursor->type : 'undef',"\n"; }
-  $win->set_cursor ($cursor);
+  foreach my $win (@windows) {
+    $win or next;
+    if (DEBUG) { print "  set_cursor $win ",
+                   defined $cursor ? $cursor->type:'undef', "\n"; }
+    $win->set_cursor ($cursor);
+  }
 }
 
 # 'realized' handler on a WidgetCursor affected widget
@@ -310,65 +324,6 @@ sub _do_widget_realize {
   _update_widget ($widget);
 }
 
-# $widget->Gtk2_Ex_WidgetCursor_window() returns the window in $widget we'll
-# act on, incorporating hacks for core classes with multiple windows.
-#
-# default to $widget->window
-*Gtk2::Widget::Gtk2_Ex_WidgetCursor_window = \&Gtk2::Widget::window;
-
-# GtkTextView puts its insertion point cursor on its "text" window, so we
-# operate on that.
-#
-sub Gtk2::TextView::Gtk2_Ex_WidgetCursor_window {
-  my ($widget) = @_;
-  return $widget->get_window ('text');
-}
-
-# GtkEntry has a window and then within that a subwindow just 4 pixels
-# smaller in height.  We act on the subwindow so as to override the
-# insertion point cursor it puts there.  Since the subwindow isn't a
-# documented feature check that it does, in fact, exist.
-#
-sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_window {
-  my ($widget) = @_;
-  my $win = $widget->window
-    || return undef; # if unrealized
-  my ($subwin) = $win->get_children; # first child
-  if ($subwin) {
-    return $subwin;
-  } else {
-    return $widget->SUPER::Gtk2_Ex_WidgetCursor_window;
-  }
-}
-
-# GtkButton is no-window but it keeps a secret input-only "event_window" to
-# see enter/leave, so we act on that.  Finding it is tricky because that
-# event_window field is private, but we can look through all the window
-# children for the one which maps to our button (via its userdata in the
-# usual window to widget event processing path).
-#
-# Cache the window against the widget to save repeating the search, but only
-# weak for when the button is unrealized.
-#
-sub Gtk2::Button::Gtk2_Ex_WidgetCursor_window {
-  my ($widget) = @_;
-  my $win = $widget->{__PACKAGE__.'.event_window'};
-  if ($win) { return $win; }
-
-  my $parent_win = $widget->window
-    || return undef; # if unrealized
-
-  my $event = Gtk2::Gdk::Event->new ('expose');
-  foreach my $win ($widget->window->get_children) {
-    $event->window ($win);
-    if (Gtk2->get_event_widget($event) == $widget) {
-      $widget->{__PACKAGE__.'.event_window'} = $win;
-      Scalar::Util::weaken ($widget->{__PACKAGE__.'.event_window'});
-      return $win;
-    }
-  }
-  return undef;
-}
 
 # Return true if $wobj is applicable to $widget, either because $widget is
 # in its widgets list or is a child of one of them for "include_children".
@@ -393,9 +348,10 @@ sub cursor {
   if (! $self->{'active'} || _cursor_equal ($oldval, $newval)) { return; }
 
   foreach my $widget (@{$self->{'installed_widgets'}}) {
-    my $win = $widget->Gtk2_Ex_WidgetCursor_window
-      || next; # only realized widgets change
-    $win->set_cursor (_resolve_cursor ($self, $widget));
+    foreach my $win ($widget->Gtk2_Ex_WidgetCursor_windows) {
+      $win || next;  # only if realized
+      $win->set_cursor (_resolve_cursor ($self, $widget));
+    }
   }
 }
 
@@ -420,7 +376,8 @@ sub add_widgets {
 
   # only those not already in our list
   @widgets = grep { my $widget = @_;
-                    ! List::Util::first {$_==$widget} @$aref } @widgets;
+                    ! List::Util::first {defined $_ && $_==$widget}
+                      @$aref } @widgets;
   if (! @widgets) { return; }
 
   foreach my $widget (@widgets) {
@@ -453,12 +410,12 @@ sub _resolve_cursor {
     return $cursor;
 
   } elsif ($cursor eq 'invisible') {
-    # call through $wobj in case someone has subclassed us
+    # call through $wobj in case of subclassing
     return $wobj->invisible_cursor ($widget);
 
   } else {
-    # string cursor name -- we only ever resolve here when widget is
-    # realized, so get_display() won't be undef
+    # string cursor name -- only ever call to resolve here when widget is
+    # realized, so get_display() isn't undef
     my $display = $widget->get_display;
     return Gtk2::Gdk::Cursor->new_for_display ($display, $cursor);
   }
@@ -474,8 +431,113 @@ sub _container_recursively {
   }
 }
 
-# return true if $widget is the Gtk2::EventBox child of a Gtk2::Combo popup
-# window (it's a child of the popup window, not of the Combo itself)
+#------------------------------------------------------------------------------
+# operative windows hacks
+#
+# $widget->Gtk2_Ex_WidgetCursor_windows() returns a list of windows in
+# $widget to act on, with hacks to pickup multiple windows on core classes.
+#
+# $widget->Gtk2_Ex_WidgetCursor_hack_restore() returns ($win, $cursor).
+# $cursor is a string cursor name to put back on $win when there's no more
+# WidgetCursor objects.  Or the return is an empty list or $win undef when
+# nothing to hack (in which case all windows go back to "undef" cursor).
+#
+
+# default to operate on $widget->window alone
+*Gtk2::Widget::Gtk2_Ex_WidgetCursor_windows = \&Gtk2::Widget::window;
+sub Gtk2::Widget::Gtk2_Ex_WidgetCursor_hack_restore { return (); }
+
+# GtkEventBox under a GtkComboBox popup window has a 'top-left-arrow'.  It
+# gets overridden by a special case in the recursive updates above, and
+# hack_restore() here puts it back.
+#
+sub Gtk2::EventBox::Gtk2_Ex_WidgetCursor_hack_restore {
+  my ($widget) = @_;
+  return _widget_is_combo_eventbox($widget)
+    && ($widget->window, 'top-left-arrow');
+}
+
+# GtkTextView operate on 'text' subwindow to override its insertion point
+# cursor there, plus the main 'widget' window to cover the entire widget
+# extent.  The 'text' subwindow insertion point is supposed to be on when
+# the widget is sensitive, so hack_restore() that.
+#
+sub Gtk2::TextView::Gtk2_Ex_WidgetCursor_windows {
+  my ($widget) = @_;
+  return ($widget->get_window ('widget'),
+          $widget->get_window ('text'));
+}
+sub Gtk2::TextView::Gtk2_Ex_WidgetCursor_hack_restore {
+  my ($widget) = @_;
+  return $widget->sensitive && ($widget->get_window('text'), 'xterm');
+}
+
+# GtkEntry's extra subwindow included here.  And when sensitive it should be
+# put back to an insertion point.  For a bit of safety use list context etc
+# to allow for no subwindows, since it's undocumented.
+#
+sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_windows {
+  my ($widget) = @_;
+  my $win = $widget->window || return; # if unrealized
+  return ($win, $win->get_children);
+}
+sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_hack_restore {
+  my ($widget) = @_;
+  $widget->sensitive or return;
+  my $win = $widget->window || return; # if unrealized
+  return (($win->get_children)[0], 'xterm');
+}
+
+# GtkSpinButton's extra "panel" overlay window found as a "sibling" (which
+# also finds the main window), plus the GtkEntry subwindow the same as in
+# GtkEntry above.  hack_restore() is inherited from GtkEntry.
+#
+sub Gtk2::SpinButton::Gtk2_Ex_WidgetCursor_windows {
+  my ($widget) = @_;
+  my $win = $widget->window || return; # if unrealized
+  return (_widget_sibling_windows ($widget),
+          $win->get_children);
+}
+
+# GtkButton secret input-only "event_window" overlay found as a "sibling".
+#
+sub Gtk2::Button::Gtk2_Ex_WidgetCursor_windows {
+  my ($widget) = @_;
+  return _widget_sibling_windows ($widget);
+}
+
+# _widget_sibling_windows() returns a list of the "sibling" windows of
+# $widget.  This means all the windows which are under $widget's parent and
+# have their events directed to $widget.  If $widget is a windowed widget
+# then this will include its main $widget->window (or should do).
+#
+# The search works by seeing where a dummy expose event is directed by
+# gtk_get_event_widget().  It'd also be possible to inspect
+# gdk_window_get_user_data(), but Gtk2-Perl only returns an "unsigned" for
+# that so it'd need some nasty digging for the widget address.
+#
+# In the past the code here cached the result against the widget (what was
+# then just GtkButton's "event_window" sibling), with weakening of course so
+# unrealize would destroy the windows as normal.  But don't bother with that
+# now, on the basis that cursor changes hopefully aren't so frequent as to
+# need too much trouble, and that it's less prone to mistakes if not cached
+# :-).
+#
+sub _widget_sibling_windows {
+  my ($widget) = @_;
+  my $parent_win = ($widget->flags & 'no-window'
+                    ? $widget->window
+                    : $widget->get_parent_window)
+    || return; # if unrealized
+
+  my $event = Gtk2::Gdk::Event->new ('expose');
+  return grep { $event->window ($_);
+                ($widget == (Gtk2->get_event_widget($event) || 0))
+              } $parent_win->get_children;
+}
+
+# Return true if $widget is the Gtk2::EventBox child of a Gtk2::Combo popup
+# window (it's a child of the popup window, not of the Combo itself).
 sub _widget_is_combo_eventbox {
   my ($widget) = @_;
   return ($widget->isa('Gtk2::EventBox')
@@ -526,7 +588,7 @@ sub busy {
 
   # this find_property() ia a hack to persuade Gtk2-Perl 1.181 to finish
   # loading Gtk2::Widget; without it signal_add_emission_hook() fails if no
-  # Gtk2::Widget's have been created yet
+  # Gtk2::Widget has been created yet
   Gtk2::Widget->find_property ('name');
   
   $realize_id ||= Gtk2::Widget->signal_add_emission_hook
@@ -537,7 +599,7 @@ sub busy {
 }
 
 # While busy notice extra toplevels which have been realized.
-# (It's best to apply a cursor setting after realize, so the setting is
+# (It's best for us to apply the cursor setting after the realize, so it's
 # there ready for when the map is done.)
 sub _do_busy_realize_emission {
   my ($invocation_hint, $param_list) = @_;
@@ -661,9 +723,9 @@ Gtk2::Ex::WidgetCursor -- mouse pointer cursor management for widgets
 
 =head1 DESCRIPTION
 
-WidgetCursor manages the mouse pointer cursor shown in widget windows; ie.
-as set by C<Gtk2::Gdk::Window::set_cursor>.  A "busy" mechanism can display
-a wristwatch on all windows when the whole application is blocked.
+WidgetCursor manages the mouse pointer cursor shown in widget windows;
+ie. as set by C<Gtk2::Gdk::Window::set_cursor>.  A "busy" mechanism can
+display a wristwatch on all windows when the whole application is blocked.
 
 The plain GdkWindow C<set_cursor> lacks even a corresponding C<get_cursor>,
 making it very difficult for widget add-ons or independent parts of an
@@ -681,16 +743,16 @@ something else temporarily while dragging, and perhaps a wristwatch "busy"
 indication trumping one or both (like the global "busy" mechanism below).
 
 The F<examples> subdirectory in the sources has some variously contrived
-example programs.
+sample programs.
 
 =head1 WIDGETCURSOR OBJECTS
 
 =over 4
 
-=item C<< Gtk2::Ex::WidgetCursor->new (key => value, ...) >>
+=item C<< $wc = Gtk2::Ex::WidgetCursor->new (key => value, ...) >>
 
-Create a new C<WidgetCursor> object.  Parameters are taken in key/value
-style,
+Create and return a new C<WidgetCursor> object.  Parameters are taken in
+key/value style,
 
     widget             single widget
     widgets            array reference for multiple widgets
@@ -743,13 +805,13 @@ Optional C<priority> is a number.  The default is level 0 and higher values
 are higher priority.  A low value (perhaps negative) can act as a fallback,
 or a high value can trump other added cursors.
 
-=item C<< $wc->active () >>
+=item C<< $bool = $wc->active () >>
 
 =item C<< $wc->active ($newval) >>
 
 Get or set the "active" state of C<$wc>.
 
-=item C<< $wc->cursor () >>
+=item C<< $cursor = $wc->cursor () >>
 
 =item C<< $wc->cursor ($cursor) >>
 
@@ -758,9 +820,9 @@ above can be given.  Eg.
 
     $wc->cursor ('umbrella');
 
-=item C<< $wc->widgets () >>
+=item C<< @widgets = $wc->widgets () >>
 
-Return the widgets currently in C<$wc>.  Eg.
+Return a list of the widgets currently in C<$wc>.  Eg.
 
     my @array = $wc->widgets;
 
@@ -770,8 +832,8 @@ or if you know you're only acting on one widget then say
 
 =item C<< $wc->add_widgets ($widget, $widget, ...) >>
 
-Add widgets to C<$wc>.  Any given widgets already in C<$wc> remain there
-unchanged.
+Add widgets to C<$wc>.  Any widgets given which are in fact already in
+C<$wc> are ignored.
 
 =back
 
@@ -800,8 +862,8 @@ draw or interact for a while.
 If your busy state isn't CPU-intensive, but instead perhaps a Glib timer or
 an I/O watch on a socket, then this is not what you want, it'll turn off too
 soon.  (Instead simply make a C<WidgetCursor> with a C<"watch"> and turn it
-on or off at your start and end points; see F<examples/timebusy.pl> in the
-sources.)
+on or off at your start and end points.  See F<examples/timebusy.pl> in the
+sources for an example of that sort of thing.)
 
 =over 4
 
@@ -822,8 +884,8 @@ straight into its work.  For example
 
 If you create new windows within a C<busy> then they too get the busy
 cursor.  You can even go busy before creating any windows at all.  But note
-WidgetCursor doesn't do any X flush for new creations; if you want them to
-show immediately then you have to flush in the usual way.
+WidgetCursor doesn't do any extra X flush for new creations; if you want
+them to show immediately then you'll have to flush in the usual way.
 
 C<busy> uses a C<WidgetCursor> object as described above and so cooperates
 with application uses of that.  Priority level 1000 is set to trump other
@@ -851,9 +913,9 @@ make it available to applications.
 
 =over 4
 
-=item C<< Gtk2::Ex::WidgetCursor->invisible_cursor () >>
+=item C<< $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor () >>
 
-=item C<< Gtk2::Ex::WidgetCursor->invisible_cursor ($target) >>
+=item C<< $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor ($target) >>
 
 Return a C<Gtk2::Gdk::Cursor> object which is invisible, ie. displays no
 cursor at all.  This is the sort of "no pixels set" cursor described in the
@@ -866,8 +928,8 @@ display then that's all you need.
     my $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor;
 
 For multiple displays note that a cursor is a per-display resource, so you
-must pass a C<$target>.  This can be a C<Gtk2::Gdk::Display> or anything
-with a C<get_display> method, which includes C<Gtk2::Widget>,
+must pass a C<$target>.  This can be a C<Gtk2::Gdk::Display>, or anything
+with a C<get_display> method, including C<Gtk2::Widget>,
 C<Gtk2::Gdk::Window>, C<Gtk2::Gdk::Drawable>, another C<Gtk2::Gdk::Cursor>,
 etc.
 
@@ -876,7 +938,7 @@ etc.
 When passing a widget note the display comes from its toplevel
 C<Gtk2::Window> parent, so the widget must have been added in as a child
 somewhere under a toplevel (or be a toplevel itself).  Until then
-C<get_display> returns undef and C<invisible_cursor> will croak.
+C<invisible_cursor> will croak.
 
 The invisible cursor is cached against the display, so repeated calls don't
 make a new one every time.
@@ -895,8 +957,9 @@ always the same no-window child.
 An exception to the no-window rule is C<Gtk2::Button>.  It has the no-window
 flag but in fact keeps a private input-only event window over its allocated
 space.  WidgetCursor digs that out and uses it to put the cursor on the
-intended area.  However an exception to the exception is C<Gtk2::LinkButton>
-which makes a mess of its parent window cursor.
+intended area.  But an exception to the exception is C<Gtk2::LinkButton>
+where a setting on the button works fine, but any WidgetCursor on its parent
+is messed up.
 
 In the future it might be possible to have cursors on no-window widgets by
 following motion-notify events within the container parent in order to
@@ -910,14 +973,13 @@ not.  Moving widgets is unusual, so in practice this isn't too bad.  (Doing
 the right thing in all cases might need a lot of C<add> or C<parent> signal
 connections.)
 
-Widgets calling C<Gtk2::Gdk::Window::set_cursor> themselves generally defeat
-the WidgetCursor mechanism.  WidgetCursor has some special handling for
+Widgets calling C<< $window->set_cursor >> themselves generally defeat the
+WidgetCursor mechanism.  WidgetCursor has some special handling for
 C<Gtk2::Entry> and C<Gtk2::TextView> (their insertion point cursor), but a
 few other core widgets have problems.  The worst affected currently is
-C<Gtk2::LinkButton> which upsets the cursor in its container parent.
-Hopefully this can improve in the future, though the ill effects may often
-be as modest as an C<include_children> not in fact "including" children of
-the offending types.
+C<Gtk2::LinkButton> per above.  Hopefully this can improve in the future,
+though ill effects may often be as modest as an C<include_children> merely
+not "including" children of offending types.
 
 =head1 SEE ALSO
 

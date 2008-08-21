@@ -52,12 +52,12 @@ HERE
 sub MY::postamble {
   return <<'MAKE_FRAG';
 
-CHECKFILES = $(TO_INST_PM) t/*.t examples/*.pl devel/*.pl
+LINT_FILES = $(TO_INST_PM) t/*.t examples/*.pl devel/*.pl
 lint:
-	perl -MO=Lint $(CHECKFILES)
-	podchecker    $(CHECKFILES)
+	perl -MO=Lint $(LINT_FILES)
+	podchecker    $(LINT_FILES)
 pc:
-	perlcritic $(CHECKFILES)
+	perlcritic $(LINT_FILES)
 
 myman:
 	mv MANIFEST MANIFEST.old
@@ -66,7 +66,11 @@ myman:
 
 WidgetCursor.html: lib/Gtk2/Ex/WidgetCursor.pm Makefile
 	-perl -MPod::Simple::HTML -e Pod::Simple::HTML::go \
-	  lib/Gtk2/Ex/WidgetCursor.pm >WidgetCursor.html
+	  lib/Gtk2/Ex/WidgetCursor.pm \
+	| sed 's!http://search.cpan.org/perldoc?Glib%3A%3A\([^"]*\)!http://gtk2-perl.sourceforge.net/doc/pod/Glib/\1.html!' \
+	| sed 's!http://search.cpan.org/perldoc?Gtk2%3A%3A\([^"%]*\)"!http://gtk2-perl.sourceforge.net/doc/pod/Gtk2/\1.html"!' \
+	| sed 's!http://search.cpan.org/perldoc?Gtk2%3A%3AGdk%3A%3A\([^"%]*\)"!http://gtk2-perl.sourceforge.net/doc/pod/Gtk2/Gdk/\1.html"!' \
+	>WidgetCursor.html
 
 # find files in the dist with mod times this year, but without this year in
 # the copyright line
@@ -81,7 +85,7 @@ copyright-years-check:
 	      '' | */ \
 	      | debian/changelog | debian/compat | debian/control \
 	      | t/pod.t \
-	      | COPYING | MANIFEST | SIGNATURE | META.yml) \
+	      | COPYING | MANIFEST* | SIGNATURE | META.yml) \
 	      continue ;; \
 	    esac; \
 	    if test -e "$(srcdir)/$$i"; then f="$(srcdir)/$$i"; \

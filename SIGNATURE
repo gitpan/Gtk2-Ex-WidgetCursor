@@ -15,12 +15,13 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 8624bcdae55baeef00cd11d5dfcfa60f68710a02 COPYING
-SHA1 d6a6b417b5ef16b219d4af5d38610cbc150eec97 Changes
-SHA1 a0988b7406d23ffc5ee0e635dc37eaf6d7cb5cd2 MANIFEST
-SHA1 f94148567c4c74ebeeb1e235cfe8f8577b664e99 META.yml
-SHA1 ca9012a3cd4d4189edb9550533767b28d5427462 Makefile.PL
+SHA1 182b9c183bef93af50e4d693732af8d5704b5361 Changes
+SHA1 64f3e2810665ad19e1b5eec2b8b93bab859ad63a MANIFEST
+SHA1 1e48a2fc19907943c888cef4060584bf8a564a33 MANIFEST.SKIP
+SHA1 53071aee6baa8d964ff86728f684c8a9f90604ee META.yml
+SHA1 50d1467d914ba4b62a93e2ded6c8257f3ca8c1be Makefile.PL
 SHA1 1177f24de3e5ba5e74d025fd17421f9f5f96b023 README
-SHA1 6c8ae62235a4a07ab0a3f92c23d3c058a10835d2 debian/changelog
+SHA1 f7a99ecc7135068daefcc4baf2bbf433b168b751 debian/changelog
 SHA1 1b6453892473a467d07372d45eb05abc2031647a debian/compat
 SHA1 4640345f3b71bff540397d21b73052669a0fede9 debian/control
 SHA1 1c490ec2d7220e3fca1b7394a7783f4704ce897f debian/copyright
@@ -30,22 +31,24 @@ SHA1 d0799b952f662a041967caafd23137dec53d8440 devel/busydestroy.pl
 SHA1 99335fb97515a1858b3c5a190893d60fec88c790 devel/busynew.pl
 SHA1 a77ab489cc43fcbe955b3493881610e3b7148c2b devel/combo.pl
 SHA1 90f9283e3576f4336a3f4451f13e3ce79d5f5fb5 devel/entry.pl
+SHA1 9594d8532240cca77e2fd58777b8f50a4666cb8f devel/linkbutton.pl
 SHA1 d9ed050a14c64a535d2e3dd8d67958710c040cf4 devel/no-window.pl
-SHA1 367c512168071218f8f6a170ed74c739e8e1ce9b devel/run.pl
+SHA1 f12499d64dd79010d858b386ae1596b6748ffbd5 devel/run.pl
+SHA1 0dc0b16deccfccf4f2be2c50fdb093264577dd2c devel/spinner.pl
 SHA1 0aeb7dc55e2aa6c5c3527bad3af321291513335d devel/unbusy-idle.pl
 SHA1 cbb0cd9a11d7efc399edc09cd823a6707b79360c examples/cursortype.pl
 SHA1 78da376911f53b37418fd45befbdb8a7361a252b examples/heart.pl
 SHA1 9d63fcab7927973d9cc170c8953ca5cf3f77e4a7 examples/misc.pl
 SHA1 98512ebb694985257201d19840b71c65e6cb18af examples/priority.pl
 SHA1 ff4d1286322f634d01d3ccf148aa5c9e349b0cbe examples/timebusy.pl
-SHA1 5173414ca7aeaabe5a1fab39d4c319fac55299d9 lib/Gtk2/Ex/WidgetCursor.pm
-SHA1 f6691fd231cc08f4250851a39eb10ad52b2c84cf t/WidgetCursor.t
-SHA1 18e606473b01cde76a7fd6a3bad081491b519347 t/busy-first.t
+SHA1 fe982f3331f2f7c0d521dfb0719776f3cd0291f6 lib/Gtk2/Ex/WidgetCursor.pm
+SHA1 b39b1ea9ccbf60453dcbe45d8086f7869b2e7453 t/WidgetCursor.t
+SHA1 df6555dfd47f5290f8b7281bfd3e2253f721c993 t/busy-first.t
 SHA1 a661a39e55a4127aecb1b97a631c4f01f7dce8c6 t/pod.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (GNU/Linux)
 
-iD8DBQFIhm6OLFMCIV9q3ToRAt87AJ9kFP75dc+M5M6VSOZH3VMuP0OssQCgpG/s
-B7/mWpVheP5gUeG21NBatfI=
-=Iptf
+iD8DBQFIrKbLLFMCIV9q3ToRAoxxAJ49V9OtIQwEYM61imEj5nSQ1lIBzQCgudXJ
+JUqW9B0MenTEBscu4aZ0nQk=
+=g2Mu
 -----END PGP SIGNATURE-----
