@@ -19,11 +19,28 @@
 
 use strict;
 use warnings;
+use Gtk2::Ex::WidgetCursor;
+use Gtk2;
 use Test::More tests => 1;
 
-use Scalar::Util;
-use Gtk2;
-use Gtk2::Ex::WidgetCursor;
+diag ("Perl-Gtk2 version ",Gtk2->VERSION);
+diag ("Perl-Glib version ",Glib->VERSION);
+diag ("Compiled against Glib version ",
+      Glib::MAJOR_VERSION(), ".",
+      Glib::MINOR_VERSION(), ".",
+      Glib::MICRO_VERSION(), ".");
+diag ("Running on       Glib version ",
+      Glib::major_version(), ".",
+      Glib::minor_version(), ".",
+      Glib::micro_version(), ".");
+diag ("Compiled against Gtk version ",
+      Gtk2::MAJOR_VERSION(), ".",
+      Gtk2::MINOR_VERSION(), ".",
+      Gtk2::MICRO_VERSION(), ".");
+diag ("Running on       Gtk version ",
+      Gtk2::major_version(), ".",
+      Gtk2::minor_version(), ".",
+      Gtk2::micro_version(), ".");
 
 SKIP: {
   if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 1; }

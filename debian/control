@@ -27,7 +27,7 @@ Bugs: mailto:user42@zip.com.au
 
 Package: libgtk2-ex-widgetcursor-perl
 Architecture: all
-Depends: libgtk2-perl
+Depends: libgtk2-perl, ${misc:Depends}
 Description: Mouse pointer cursor in widgets
  Gtk2::Ex::WidgetCursor manages the mouse pointer cursor displayed in
  the window of a widget.  It helps widget or application actions

@@ -83,7 +83,7 @@ copyright-years-check:
 	  while read i; do \
 	    case $$i in \
 	      '' | */ \
-	      | debian/changelog | debian/compat | debian/control \
+	      | debian/changelog | debian/compat \
 	      | t/pod.t \
 	      | COPYING | MANIFEST* | SIGNATURE | META.yml) \
 	      continue ;; \

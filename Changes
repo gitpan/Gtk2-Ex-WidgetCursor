@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License along
 with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
+Version 7, December 2008
+    - workaround for emission hook before any widgets with gtk2-perl 1.160
+
 Version 6, August 2008
     - restore cursor on Gtk2::SpinButton, improve Gtk2::TextView
 

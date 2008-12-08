@@ -13,3 +13,5 @@
 \.deb$
 dist-deb
 ^maybe
+TAGS
+^msg

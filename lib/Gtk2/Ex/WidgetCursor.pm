@@ -23,7 +23,7 @@ use Gtk2;
 use List::Util;
 use Scalar::Util;
 
-our $VERSION = 6;
+our $VERSION = 7;
 
 # set this to 1 for some diagnostic prints
 use constant DEBUG => 0;
@@ -137,7 +137,7 @@ sub new {
   # widget=> and/or widgets=> params merged, copied and weakened
   my @array;
   if (my $widget = delete $self->{'widget'}) { push @array, $widget; }
-  if (my $aref = $self->{'widgets'}) { push @array, @{$self->{'widgets'}}; }
+  if (my $aref = $self->{'widgets'}) { push @array, @$aref; }
   foreach (@array) { Scalar::Util::weaken ($_); }
   $self->{'widgets'} = \@array;
   $self->{'installed_widgets'} = [];
@@ -586,9 +586,12 @@ sub busy {
   }
   _flush_mapped_widgets (@widgets);
 
-  # this find_property() ia a hack to persuade Gtk2-Perl 1.181 to finish
-  # loading Gtk2::Widget; without it signal_add_emission_hook() fails if no
-  # Gtk2::Widget has been created yet
+  # This is a hack to persuade Gtk2-Perl 1.160 and 1.181 to finish loading
+  # Gtk2::Widget.  Without this if no Gtk2::Widget has ever been created the
+  # signal_add_emission_hook() fails.  1.160 needs the combination of isa()
+  # and find_property().  1.181 is ok with find_property() alone.  Either
+  # way these can be removed when ready to depend on 1.200 and up.
+  Gtk2::Widget->isa ('Gtk2::Widget');
   Gtk2::Widget->find_property ('name');
   
   $realize_id ||= Gtk2::Widget->signal_add_emission_hook
@@ -616,7 +619,6 @@ sub _do_busy_realize_emission {
 # before the time they take.
 #
 sub _busy_idle_handler {
-  my ($widget) = @_;
   if (DEBUG) { print "_busy_idle_handler: finished\n"; }
   $busy_id = undef;
   if ($busy_wc) { $busy_wc->unbusy; }
@@ -723,9 +725,9 @@ Gtk2::Ex::WidgetCursor -- mouse pointer cursor management for widgets
 
 =head1 DESCRIPTION
 
-WidgetCursor manages the mouse pointer cursor shown in widget windows;
-ie. as set by C<Gtk2::Gdk::Window::set_cursor>.  A "busy" mechanism can
-display a wristwatch on all windows when the whole application is blocked.
+WidgetCursor manages the mouse pointer cursor shown in widget windows, as
+set by C<Gtk2::Gdk::Window::set_cursor>.  A "busy" mechanism can display a
+wristwatch on all windows when the whole application is blocked.
 
 The plain GdkWindow C<set_cursor> lacks even a corresponding C<get_cursor>,
 making it very difficult for widget add-ons or independent parts of an
@@ -773,17 +775,17 @@ C<cursor> can be any of
 
 =item *
 
-A C<Gtk2::Gdk::Cursor> object.  If your program uses multiple displays then
-remember the cursor object must be on the same display as the widget(s).
-
-=item *
-
 A string name of a cursor from the C<Gtk2::Gdk::CursorType> enum, such as
 C<"hand1"> (see L<Gtk2::Gdk::Cursor> for the full list).
 
 =item *
 
 The special string name C<"invisible"> to have no cursor at all.
+
+=item *
+
+A C<Gtk2::Gdk::Cursor> object.  If your program uses multiple displays then
+remember the cursor object must be on the same display as the widget(s).
 
 =item *
 
@@ -906,7 +908,7 @@ remainder is finishing up.
 
 =head1 INVISIBLE CURSOR
 
-This invisible cusor constructor is used WidgetCursor above for the
+This invisible cusor constructor is used by WidgetCursor above for the
 C<"invisible"> cursor and is made available for general use.  Gtk has
 similar code in C<GtkEntry> and C<GtkTextView>, but as of Gtk 2.12 doesn't
 make it available to applications.
@@ -976,9 +978,9 @@ connections.)
 Widgets calling C<< $window->set_cursor >> themselves generally defeat the
 WidgetCursor mechanism.  WidgetCursor has some special handling for
 C<Gtk2::Entry> and C<Gtk2::TextView> (their insertion point cursor), but a
-few other core widgets have problems.  The worst affected currently is
+few other core widgets have problems.  The worst currently is
 C<Gtk2::LinkButton> per above.  Hopefully this can improve in the future,
-though ill effects may often be as modest as an C<include_children> merely
+though ill effects can often be as modest as an C<include_children> merely
 not "including" children of offending types.
 
 =head1 SEE ALSO
