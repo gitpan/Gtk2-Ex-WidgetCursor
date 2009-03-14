@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2008 Kevin Ryde
+# Copyright 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -26,9 +26,12 @@ use warnings;
 use Gtk2 '-init';
 use Gtk2::Ex::WidgetCursor;
 
+use FindBin;
+my $progname = $FindBin::Script;
+
 my $toplevel = Gtk2::Window->new ('toplevel');
 $toplevel->signal_connect (destroy => sub {
-                             print __FILE__.": quit\n";
+                             print "$progname: quit\n";
                              Gtk2->main_quit;
                            });
 
@@ -48,7 +51,7 @@ $eventbox->add ($entry);
   my $check = Gtk2::CheckButton->new_with_label ("Umbrella");
   $check->signal_connect
     ('notify::active' => sub {
-       print __FILE__.": set umbrella ",$check->get_active,"\n";
+       print "$progname: set umbrella ",$check->get_active,"\n";
        $wc->active ($check->get_active);
      });
   $vbox->pack_start ($check, 1,1,0);
@@ -58,7 +61,7 @@ $eventbox->add ($entry);
   $button->signal_connect
     (clicked => sub {
        Glib::Timeout->add (1000, sub {
-                             print __FILE__.": busy\n";
+                             print "$progname: busy\n";
                              Gtk2::Ex::WidgetCursor->busy;
                              sleep (4);
                              return 0; # stop timer
@@ -70,15 +73,21 @@ $eventbox->add ($entry);
 $toplevel->show_all;
 
 {
-  my $win = $entry->window;
   # $win->set_cursor (Gtk2::Gdk::Cursor->new ('boat'));
+  print "$progname: entry\n";
+  print_windows ($entry->window);
+}
+sub print_windows {
+  my ($win, $name) = @_;
+  $name ||= '  window';
   my ($width,$height) = $win->get_size;
-  print __FILE__.": entry\n";
-  print "  window ${width}x${height} ",$win->get_window_type,"\n";
-  foreach my $win ($win->get_children) {
-    my ($width,$height) = $win->get_size;
-    print "  subwin ${width}x${height} ",$win->get_window_type,"\n";
-    # $win->set_cursor (Gtk2::Gdk::Cursor->new ('umbrella'));
+  my ($x,$y) = $win->get_position;
+  print "$name ${width}x${height} $x,$y ",$win->get_window_type,"\n";
+
+  $name =~ s/window/subwin/;
+  $name = '  '.$name;
+  foreach my $subwin ($win->get_children) {
+    print_windows ($subwin, $name);
   }
 }
 

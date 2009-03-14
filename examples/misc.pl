@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2007, 2008 Kevin Ryde
+# Copyright 2007, 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -100,7 +100,7 @@ $heart_button->signal_connect
    });
 sub heart_beat {
   $heart_cursor->active (! $heart_cursor->active);
-  return 1; # continue timer
+  return 1; # Glib::SOURCE_CONTINUE, continue timer
 }
 
 

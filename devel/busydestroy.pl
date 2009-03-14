@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2008 Kevin Ryde
+# Copyright 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -23,10 +23,13 @@ use warnings;
 use Gtk2 '-init';
 use Gtk2::Ex::WidgetCursor;
 
+use FindBin;
+my $progname = $FindBin::Script;
+
 my $toplevel = Gtk2::Window->new ('toplevel');
 $toplevel->set_name ("my_toplevel_1");
 $toplevel->signal_connect (destroy => sub {
-                             print __FILE__,": main_quit\n";
+                             print "$progname: main_quit\n";
                              Gtk2->main_quit;
                            });
 
@@ -36,7 +39,7 @@ $toplevel->add ($vbox);
 {
   my $button = Gtk2::Button->new_with_label ("Busy and Exit");
   $button->signal_connect (clicked => sub {
-                             print __FILE__,": busy and exit\n";
+                             print "$progname: busy and exit\n";
                              Gtk2::Ex::WidgetCursor->busy;
                              $toplevel->destroy;
                              Gtk2->main_quit;
@@ -56,7 +59,7 @@ sub new {
 }
 
 sub DESTROY {
-  print __FILE__,": Foo destroy\n";
+  print "$progname: Foo destroy\n";
   Gtk2::Ex::WidgetCursor->unbusy;
 }
 
@@ -65,5 +68,5 @@ my $foo = Foo->new;
 
 $toplevel->show_all;
 Gtk2->main;
-print __FILE__,": main returned, now exit\n";
+print "$progname: main returned, now exit\n";
 exit 0;

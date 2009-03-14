@@ -1,10 +1,10 @@
-Copyright 2008 Kevin Ryde
+Copyright 2008, 2009 Kevin Ryde
 
 This file is part of Gtk2-Ex-WidgetCursor.
 
 Gtk2-Ex-WidgetCursor is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as published
-by the Free Software Foundation; either version 2, or (at your option) any
+by the Free Software Foundation; either version 3, or (at your option) any
 later version.
 
 Gtk2-Ex-WidgetCursor is distributed in the hope that it will be useful,
@@ -15,6 +15,9 @@ Public License for more details.
 You should have received a copy of the GNU General Public License along
 with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
+
+Version 8, March 2009
+    - restore cursor in Gtk2::SpinButton of Gtk 2.14
 
 Version 7, December 2008
     - workaround for emission hook before any widgets with gtk2-perl 1.160

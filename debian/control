@@ -16,6 +16,10 @@
 # with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
+# "libtest-pod-perl (>= 1.00)" could be in Build-Depends for more
+# tests, but it's optional and just makes the build tools drag in more
+# stuff.
+
 Source: libgtk2-ex-widgetcursor-perl
 Section: perl
 Priority: optional

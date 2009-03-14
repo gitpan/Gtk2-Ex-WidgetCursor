@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2008 Kevin Ryde
+# Copyright 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -18,7 +18,7 @@
 # with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Some experimenting with Gtk2::Entry.
+# Some experimenting with Gtk2::LinkButton.
 
 
 use strict;
@@ -27,9 +27,12 @@ use Gtk2 '-init';
 use Gtk2::Ex::WidgetCursor;
 use Data::Dumper;
 
+use FindBin;
+my $progname = $FindBin::Script;
+
 my $toplevel = Gtk2::Window->new ('toplevel');
 $toplevel->signal_connect (destroy => sub {
-                             print __FILE__.": quit\n";
+                             print "$progname: quit\n";
                              Gtk2->main_quit;
                            });
 
@@ -60,7 +63,7 @@ $inner_vbox->pack_start (Gtk2::Label->new ('world'),
   my $check = Gtk2::CheckButton->new_with_label ("Umbrella");
   $check->signal_connect
     ('notify::active' => sub {
-       print __FILE__.": set umbrella ",$check->get_active,"\n";
+       print "$progname: set umbrella ",$check->get_active,"\n";
        $wc->active ($check->get_active);
      });
   $vbox->pack_start ($check, 1,1,0);
@@ -69,10 +72,10 @@ $inner_vbox->pack_start (Gtk2::Label->new ('world'),
 {
   my $wc = Gtk2::Ex::WidgetCursor->new (widget => $eventbox,
                                         cursor => 'boat');
-  my $check = Gtk2::CheckButton->new_with_label ("Boat Outer");
+  my $check = Gtk2::CheckButton->new_with_label ("Boat Outer EventBox");
   $check->signal_connect
     ('notify::active' => sub {
-       print __FILE__.": set boat ",$check->get_active,"\n";
+       print "$progname: set boat ",$check->get_active,"\n";
        $wc->active ($check->get_active);
      });
   $vbox->pack_start ($check, 1,1,0);
@@ -83,7 +86,7 @@ $inner_vbox->pack_start (Gtk2::Label->new ('world'),
   $button->signal_connect
     (clicked => sub {
        Glib::Timeout->add (1000, sub {
-                             print __FILE__.": busy\n";
+                             print "$progname: busy\n";
                              Gtk2::Ex::WidgetCursor->busy;
                              sleep (4);
                              return 0; # stop timer
@@ -96,6 +99,34 @@ $toplevel->show_all;
 
 print "LinkButton sibling windows ",
   Dumper ([ Gtk2::Ex::WidgetCursor::_widget_sibling_windows ($button) ]);
+
+$button->signal_connect
+  (map_event => sub {
+     print "$progname: eventbox\n";
+     my $win = $eventbox->window;
+     my ($width,$height) = $win->get_size;
+     my ($x,$y) = $win->get_position;
+     print "  window ${width}x${height} $x,$y ",
+       sprintf("0x%X",$win->XID),"  $win\n";
+
+     print "$progname: linkbutton\n";
+     print "  flags ",$button->flags,"\n";
+     print_windows ($button->window);
+   });
+sub print_windows {
+  my ($win, $name) = @_;
+  $name ||= '  window';
+  my ($width,$height) = $win->get_size;
+  my ($x,$y) = $win->get_position;
+  print "$name ${width}x${height} $x,$y ",$win->get_window_type,
+    sprintf(" 0x%X",$win->XID),"  $win\n";
+
+  $name =~ s/window/subwin/;
+  $name = '  '.$name;
+  foreach my $subwin ($win->get_children) {
+    print_windows ($subwin, $name);
+  }
+}
 
 Gtk2->main;
 exit 0;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2007, 2008 Kevin Ryde
+# Copyright 2007, 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -20,10 +20,26 @@
 use strict;
 use warnings;
 use Gtk2::Ex::WidgetCursor;
-use Test::More tests => 17;
+use Test::More tests => 22;
 
-ok ($Gtk2::Ex::WidgetCursor::VERSION >= 7, 'VERSION variable');
-ok (Gtk2::Ex::WidgetCursor->VERSION  >= 7, 'VERSION method');
+my $want_version = 8;
+ok ($Gtk2::Ex::WidgetCursor::VERSION >= $want_version, 'VERSION variable');
+ok (Gtk2::Ex::WidgetCursor->VERSION  >= $want_version, 'VERSION class method');
+ok (eval { Gtk2::Ex::WidgetCursor->VERSION($want_version); 1 },
+    "VERSION class check $want_version");
+{ my $check_version = $want_version + 1000;
+  ok (! eval { Gtk2::Ex::WidgetCursor->VERSION($check_version); 1 },
+      "VERSION class check $check_version");
+}
+{
+  my $wc = Gtk2::Ex::WidgetCursor->new;
+  ok ($wc->VERSION >= $want_version, 'VERSION object method');
+  ok (eval { $wc->VERSION($want_version); 1 },
+      "VERSION object check $want_version");
+  my $check_version = $want_version + 1000;
+  ok (! eval { $wc->VERSION($check_version); 1 },
+      "VERSION object check $check_version");
+}
 
 require Gtk2;
 diag ("Perl-Gtk2 version ",Gtk2->VERSION);
@@ -51,10 +67,11 @@ sub main_iterations {
     $count++;
     Gtk2->main_iteration_do (0);
   }
-  print "main_iterations(): ran $count events/iterations\n";
+  diag "main_iterations(): ran $count events/iterations\n";
 }
 
 SKIP: {
+  Gtk2->disable_setlocale;  # leave LC_NUMERIC alone for version nums
   if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 15; }
 
 
@@ -187,7 +204,7 @@ SKIP: {
 
   # GtkSpinButton when unrealized
   {
-    my $adj = Gtk2::Adjustment->new (0, -100, 100, 1, 10, 10);
+    my $adj = Gtk2::Adjustment->new (0, -100, 100, 1, 10, 0);
     my $widget = Gtk2::SpinButton->new ($adj, 10, 0);
     my @windows = grep {defined} $widget->Gtk2_Ex_WidgetCursor_windows;
     is_deeply (\@windows, [], ref($widget).' no window when unrealized');

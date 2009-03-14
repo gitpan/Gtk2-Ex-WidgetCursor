@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2008 Kevin Ryde
+# Copyright 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -33,7 +33,7 @@ my $heart = Gtk2::Ex::WidgetCursor->new (widget => $toplevel,
                                          cursor => 'heart');
 sub beat {
   $heart->active (! $heart->active);   # toggle
-  return 1; # continue timer
+  return 1; # Glib::SOURCE_CONTINUE
 }
 Glib::Timeout->add (800, \&beat);  # 800 milliseconds
 

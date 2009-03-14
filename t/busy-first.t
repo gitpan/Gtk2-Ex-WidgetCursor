@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2008 Kevin Ryde
+# Copyright 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -43,6 +43,7 @@ diag ("Running on       Gtk version ",
       Gtk2::micro_version(), ".");
 
 SKIP: {
+  Gtk2->disable_setlocale;  # leave LC_NUMERIC alone for version nums
   if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 1; }
 
   # go busy with no widgets, exercising a workaround for Gtk2-Perl 1.181

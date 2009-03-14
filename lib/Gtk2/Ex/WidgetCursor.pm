@@ -1,10 +1,10 @@
-# Copyright 2007, 2008 Kevin Ryde
+# Copyright 2007, 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
 # Gtk2-Ex-WidgetCursor is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published
-# by the Free Software Foundation; either version 2, or (at your option) any
+# by the Free Software Foundation; either version 3, or (at your option) any
 # later version.
 #
 # Gtk2-Ex-WidgetCursor is distributed in the hope that it will be useful,
@@ -23,7 +23,7 @@ use Gtk2;
 use List::Util;
 use Scalar::Util;
 
-our $VERSION = 7;
+our $VERSION = 8;
 
 # set this to 1 for some diagnostic prints
 use constant DEBUG => 0;
@@ -92,15 +92,19 @@ use constant DEBUG => 0;
 #     most of the time with no special attention.
 #
 # GtkSpinButton   [imperfect]
-#     Subclass of GtkEntry, but adds some nonsense with a "panel" window
-#     overlaid on the normal Entry widget window (the main outer one).  It
-#     can be dug out by looking for sibling windows (with events directed to
-#     the widget), and then operate on three windows: the Entry main, the
-#     Entry 4-pixel smaller subwindow and the SpinButton panel sibling.
+#     Subclass of GtkEntry, but adds a "panel" window of arrows.  In Gtk
+#     2.12 it was overlaid on the normal Entry widget window, ie. the main
+#     outer one.  In Gtk 2.14 it's a child of that outer window.
 #
-#     Toggling sensitive doesn't work to restore the insertion point cursor
-#     for a SpinButton, unlike its Entry superclass.  Something not chaining
-#     up presumably, so the only choice is to forcibly put the cursor back.
+#     For 2.12 it can be dug out by looking for sibling windows with events
+#     directed to the widget.  Then it's a case of operating on three
+#     windows: the Entry main, the Entry 4-pixel smaller subwindow and the
+#     SpinButton panel.
+#
+#     As of Gtk 2.12 toggling sensitive doesn't work to restore the
+#     insertion point cursor for a SpinButton, unlike its Entry superclass.
+#     Something not chaining up presumably, so the only choice is to
+#     forcibly put the cursor back.
 #
 # GtkStatusBar    [not handled]
 #     A cursor on its private grip GdkWindow.
@@ -472,9 +476,13 @@ sub Gtk2::TextView::Gtk2_Ex_WidgetCursor_hack_restore {
   return $widget->sensitive && ($widget->get_window('text'), 'xterm');
 }
 
-# GtkEntry's extra subwindow included here.  And when sensitive it should be
-# put back to an insertion point.  For a bit of safety use list context etc
-# to allow for no subwindows, since it's undocumented.
+# GtkEntry's extra subwindow is included here.  And when sensitive it should
+# be put back to an insertion point.  For a bit of safety use list context
+# etc to allow for no subwindows, since it's undocumented.
+#
+# In Gtk 2.14 the SpinButton sub-class has the arrow panel as a subwindow
+# too (instead of an overlay in Gtk 2.12 and earlier).  So look for the
+# smaller height one among multiple subwindows.
 #
 sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_windows {
   my ($widget) = @_;
@@ -485,12 +493,15 @@ sub Gtk2::Entry::Gtk2_Ex_WidgetCursor_hack_restore {
   my ($widget) = @_;
   $widget->sensitive or return;
   my $win = $widget->window || return; # if unrealized
-  return (($win->get_children)[0], 'xterm');
+  my @children = $win->get_children;
+  # by increasing height
+  @children = sort {($a->get_size)[1] <=> ($b->get_size)[1]} @children;
+  return ($children[0], 'xterm');
 }
-
-# GtkSpinButton's extra "panel" overlay window found as a "sibling" (which
-# also finds the main window), plus the GtkEntry subwindow the same as in
-# GtkEntry above.  hack_restore() is inherited from GtkEntry.
+# GtkSpinButton's extra "panel" overlay window either as a "sibling" (which
+# also finds the main window) for Gtk 2.12 or in the get_children() for Gtk
+# 2.13; plus the GtkEntry subwindow as per GtkEntry above.  hack_restore()
+# inherited from GtkEntry above.
 #
 sub Gtk2::SpinButton::Gtk2_Ex_WidgetCursor_windows {
   my ($widget) = @_;
@@ -538,10 +549,13 @@ sub _widget_sibling_windows {
 
 # Return true if $widget is the Gtk2::EventBox child of a Gtk2::Combo popup
 # window (it's a child of the popup window, not of the Combo itself).
+#
 sub _widget_is_combo_eventbox {
   my ($widget) = @_;
+  my $parent;
   return ($widget->isa('Gtk2::EventBox')
-          && $widget->get_parent->get_name eq 'gtk-combo-popup-window');
+          && ($parent = $widget->get_parent)  # might not have a parent
+          && $parent->get_name eq 'gtk-combo-popup-window');
 }
 
 
@@ -622,7 +636,7 @@ sub _busy_idle_handler {
   if (DEBUG) { print "_busy_idle_handler: finished\n"; }
   $busy_id = undef;
   if ($busy_wc) { $busy_wc->unbusy; }
-  return 0; # remove idle handler, one run only
+  return 0; # Glib::SOURCE_REMOVE, one run only
 }
 
 sub unbusy {
@@ -994,7 +1008,7 @@ L<http://www.geocities.com/user42_kevin/gtk2-ex-widgetcursor/index.html>
 
 =head1 LICENSE
 
-Copyright 2007, 2008 Kevin Ryde
+Copyright 2007, 2008, 2009 Kevin Ryde
 
 Gtk2-Ex-WidgetCursor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by the

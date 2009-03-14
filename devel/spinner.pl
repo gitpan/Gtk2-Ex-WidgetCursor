@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2008 Kevin Ryde
+# Copyright 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -27,9 +27,12 @@ use Gtk2 '-init';
 use Gtk2::Ex::WidgetCursor;
 use Data::Dumper;
 
+use FindBin;
+my $progname = $FindBin::Script;
+
 my $toplevel = Gtk2::Window->new ('toplevel');
 $toplevel->signal_connect (destroy => sub {
-                             print __FILE__.": quit\n";
+                             print "$progname: quit\n";
                              Gtk2->main_quit;
                            });
 
@@ -39,7 +42,7 @@ $toplevel->add ($vbox);
 my $eventbox = Gtk2::EventBox->new;
 $vbox->pack_start ($eventbox, 1,1,0);
 
-my $adj = Gtk2::Adjustment->new (0, -100, 100, 1, 10, 10);
+my $adj = Gtk2::Adjustment->new (0, -100, 100, 1, 10, 0);
 my $spin = Gtk2::SpinButton->new ($adj, 10, 0);
 $spin->set_name ('myspinner');
 print "spinner initial flags ",$spin->flags,"\n";
@@ -52,7 +55,7 @@ $eventbox->add ($spin);
   my $check = Gtk2::CheckButton->new_with_label ("Umbrella");
   $check->signal_connect
     ('notify::active' => sub {
-       print __FILE__.": set umbrella ",$check->get_active,"\n";
+       print "$progname: set umbrella ",$check->get_active,"\n";
        $wc->active ($check->get_active);
      });
   $vbox->pack_start ($check, 1,1,0);
@@ -62,7 +65,7 @@ $eventbox->add ($spin);
   $button->signal_connect
     (clicked => sub {
        Glib::Timeout->add (1000, sub {
-                             print __FILE__.": busy\n";
+                             print "$progname: busy\n";
                              Gtk2::Ex::WidgetCursor->busy;
                              sleep (4);
                              return 0; # stop timer
@@ -73,8 +76,11 @@ $eventbox->add ($spin);
 
 $toplevel->show_all;
 
-print "Spin sibling windows ",
+print "$progname: Spin _widget_sibling_windows() ",
   Dumper ([ Gtk2::Ex::WidgetCursor::_widget_sibling_windows ($spin) ]);
+
+print "$progname: Spin Gtk2_Ex_WidgetCursor_windows() ",
+  Dumper ([ $spin->Gtk2_Ex_WidgetCursor_windows ]);
 
 $spin->signal_connect
   (map_event => sub {
@@ -84,20 +90,27 @@ $spin->signal_connect
      my $win = $spin->window;
      # $win->set_cursor (Gtk2::Gdk::Cursor->new ('boat'));
      my ($width,$height) = $win->get_size;
-     print __FILE__.": spinner\n";
+     print "$progname: spinner\n";
      print "  flags ",$spin->flags,"\n";
-     print "  window ",sprintf('%#x',$win->XID),
-       " ${width}x${height} ",$win->get_window_type,"  $win\n";
-
-     foreach my $win ($win->get_children) {
-       my ($width,$height) = $win->get_size;
-       print "    subwin ",sprintf('%#x',$win->XID),
-         " ${width}x${height} ",$win->get_window_type,"  $win\n";
-       # $win->set_cursor (Gtk2::Gdk::Cursor->new ('umbrella'));
-     }
+     print_windows ($spin->window);
    });
 $spin->signal_connect
-  (state_changed => sub { print __FILE__,": state_changed ",Dumper(\@_); });
+  (state_changed => sub { print "$progname: state_changed ",Dumper(\@_); });
+
+sub print_windows {
+  my ($win, $name) = @_;
+  $name ||= '  window';
+  my ($width,$height) = $win->get_size;
+  my ($x,$y) = $win->get_position;
+  print "$name ${width}x${height} $x,$y ",$win->get_window_type,
+    sprintf(" 0x%X",$win->XID),"  $win\n";
+
+  $name =~ s/window/subwin/;
+  $name = '  '.$name;
+  foreach my $subwin ($win->get_children) {
+    print_windows ($subwin, $name);
+  }
+}
 
 Gtk2->main;
 exit 0;

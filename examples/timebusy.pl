@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2008 Kevin Ryde
+# Copyright 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -64,12 +64,12 @@ sub start {
 sub step {
   if (++$counter <= 6) {
     $label->set_text ("count $counter");
-    return 1; # timer continues
+    return 1; # Glib::SOURCE_CONTINUE, timer continues
   } else {
     $label->set_text (' <Ended> ');
     $widgetcursor->active (0);
     $timer_id = undef;
-    return 0; # stop timer
+    return 0; # Glib::SOURCE_REMOVE, stop timer
   }
 }
 

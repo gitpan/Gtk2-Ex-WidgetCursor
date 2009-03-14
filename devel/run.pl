@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2007, 2008 Kevin Ryde
+# Copyright 2007, 2008, 2009 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -26,6 +26,9 @@ use strict;
 use warnings;
 use Gtk2 '-init';
 use Gtk2::Ex::WidgetCursor;
+
+use FindBin;
+my $progname = $FindBin::Script;
 
 {
   my $toplevel = Gtk2::Window->new ('toplevel');
@@ -203,7 +206,7 @@ use Gtk2::Ex::WidgetCursor;
                " $time\n";
          my $status = Gtk2::Gdk->pointer_grab
            ($window, 1, $event_mask, $confine_to, $cursor, $time);
-         print __FILE__,": grab $status\n";
+         print "$progname: grab $status\n";
 
        });
     $vbox->pack_start ($button, 0, 0, 0);
@@ -232,14 +235,14 @@ use Gtk2::Ex::WidgetCursor;
 
          my $status = Gtk2::Gdk->pointer_grab
            ($window, 1, $event_mask, $confine_win, $cursor, $time);
-         print __FILE__,": grab $status\n";
+         print "$progname: grab $status\n";
 
        });
     $vbox->pack_start ($button, 0, 0, 0);
   }
   Gtk2->key_snooper_install
     (sub {
-       print __FILE__,": pointer_ungrab\n";
+       print "$progname: pointer_ungrab\n";
        Gtk2::Gdk->pointer_ungrab (0);
      });
 
