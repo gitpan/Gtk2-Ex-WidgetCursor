@@ -16,6 +16,7 @@
 # with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 package Gtk2::Ex::WidgetCursor;
+use 5.006;
 use strict;
 use warnings;
 use Carp;
@@ -23,7 +24,7 @@ use Gtk2;
 use List::Util;
 use Scalar::Util;
 
-our $VERSION = 8;
+our $VERSION = 9;
 
 # set this to 1 for some diagnostic prints
 use constant DEBUG => 0;
@@ -425,14 +426,21 @@ sub _resolve_cursor {
   }
 }
 
-# return $widget and all its contained children, grandchildren, etc
+# Return $widget and all its contained children, grandchildren, etc.
+# Iterative avoids deep recursion warning for the unlikely case of nesting
+# beyond 100 deep.
+#
 sub _container_recursively {
-  my ($widget) = @_;
-  if ($widget->can('get_children')) {
-    return $widget, map { (_container_recursively($_)) } $widget->get_children;
-  } else {
-    return $widget
+  my @pending = @_;
+  my @ret;
+  while (@pending) {
+    my $widget = pop @pending;
+    push @ret, $widget;
+    if (my $func = $widget->can('get_children')) {
+      push @pending, $widget->$func;
+    }
   }
+  return @ret;
 }
 
 #------------------------------------------------------------------------------
@@ -640,7 +648,7 @@ sub _busy_idle_handler {
 }
 
 sub unbusy {
-  my ($class) = @_;
+  # my ($class_or_self) = @_;
 
   # Some freaky stuff can happen during perl "global destruction" with
   # classes being destroyed and disconecting emission hooks on their own,
@@ -708,10 +716,14 @@ sub invisible_cursor {
   return ($display->{__PACKAGE__.'.invisible_cursor'}
           ||= do {
             if (DEBUG) { print "invisible_cursor new for $display\n"; }
-            my $window = $display->get_default_screen->get_root_window;
-            my $mask = Gtk2::Gdk::Bitmap->create_from_data ($window,"\0",1,1);
-            my $color = Gtk2::Gdk::Color->new (0,0,0);
-            Gtk2::Gdk::Cursor->new_from_pixmap ($mask,$mask,$color,$color,0,0);
+            eval {
+              Gtk2::Gdk::Cursor->new_for_display ($display,'blank-cursor')
+            } || do {
+              my $window = $display->get_default_screen->get_root_window;
+              my $mask = Gtk2::Gdk::Bitmap->create_from_data ($window,"\0",1,1);
+              my $color = Gtk2::Gdk::Color->new (0,0,0);
+              Gtk2::Gdk::Cursor->new_from_pixmap ($mask,$mask,$color,$color,0,0);
+            }
           });
 }
 
@@ -739,27 +751,29 @@ Gtk2::Ex::WidgetCursor -- mouse pointer cursor management for widgets
 
 =head1 DESCRIPTION
 
-WidgetCursor manages the mouse pointer cursor shown in widget windows, as
-set by C<Gtk2::Gdk::Window::set_cursor>.  A "busy" mechanism can display a
-wristwatch on all windows when the whole application is blocked.
+WidgetCursor manages the mouse pointer cursor shown in widget windows as set
+by C<Gtk2::Gdk::Window::set_cursor>.  A "busy" mechanism can display a
+wristwatch in all windows when the whole application is blocked.
 
-The plain GdkWindow C<set_cursor> lacks even a corresponding C<get_cursor>,
-making it very difficult for widget add-ons or independent parts of an
+The plain C<set_cursor> lacks even a corresponding C<get_cursor> until Gtk
+2.18, making it difficult for widget add-ons or independent parts of an
 application to cooperate with what cursor should be shown at different times
 or in different modes.
 
-To help with that a C<Gtk2::Ex::WidgetCursor> object represents a desired
-cursor in one or more widgets.  When "active" and when it's the newest or
-highest priority then the specified cursor is set onto those widget
-window(s).  If the WidgetCursor object is later made inactive or destroyed
-then the next highest WidgetCursor takes effect, etc.
+To help that a C<Gtk2::Ex::WidgetCursor> object represents a desired cursor
+in one or more widgets.  When "active" and when the newest or highest
+priority then the specified cursor is set onto those widget window(s).  If
+the WidgetCursor object is later made inactive or destroyed then the next
+highest WidgetCursor takes effect, etc.
 
 The idea is to have say a base WidgetCursor for an overall mode, then
 something else temporarily while dragging, and perhaps a wristwatch "busy"
 indication trumping one or both (like the global "busy" mechanism below).
 
-The F<examples> subdirectory in the sources has some variously contrived
-sample programs.
+=for me -- becomes /usr/share/doc/... in the deb
+
+The F<examples> subdirectory in the WidgetCursor sources has some variously
+contrived sample programs.
 
 =head1 WIDGETCURSOR OBJECTS
 
@@ -794,7 +808,8 @@ C<"hand1"> (see L<Gtk2::Gdk::Cursor> for the full list).
 
 =item *
 
-The special string name C<"invisible"> to have no cursor at all.
+The special string name C<"invisible"> to have no cursor at all.  (You can
+also use C<"blank-cursor"> in Gtk 2.16 and up.)
 
 =item *
 
@@ -934,8 +949,8 @@ make it available to applications.
 =item C<< $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor ($target) >>
 
 Return a C<Gtk2::Gdk::Cursor> object which is invisible, ie. displays no
-cursor at all.  This is the sort of "no pixels set" cursor described in the
-Gtk reference manual under C<gdk_cursor_new>.
+cursor at all.  This is the C<blank-cursor> in Gtk 2.16 and up, or for
+earlier versions a "no pixels set" cursor as described by C<gdk_cursor_new>.
 
 With no arguments (or C<undef>) the cursor is for the default display per
 C<< Gtk2::Gdk::Display->get_default >>.  If your program only uses one
@@ -1004,7 +1019,7 @@ L<Gtk2::Gdk::Display>
 
 =head1 HOME PAGE
 
-L<http://www.geocities.com/user42_kevin/gtk2-ex-widgetcursor/index.html>
+http://user42.tuxfamily.org/gtk2-ex-widgetcursor/index.html
 
 =head1 LICENSE
 

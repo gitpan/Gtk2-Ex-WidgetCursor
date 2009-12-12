@@ -1,22 +1,42 @@
 --- #YAML:1.0
-name:                Gtk2-Ex-WidgetCursor
-version:             8
-abstract:            Mouse pointer cursor management for Gtk widgets.
-license:             gpl
-author:              
+name:               Gtk2-Ex-WidgetCursor
+version:            9
+abstract:           Mouse pointer cursor management for Gtk widgets.
+author:
     - Kevin Ryde <user42@zip.com.au>
-generated_by:        ExtUtils::MakeMaker version 6.42
-distribution_type:   module
-requires:     
-    Gtk2:                          0
-meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
-recommends:
-    Test::Pod: 1.00
+license:            gpl
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    Gtk2:  0
+    perl:  5.008
+resources:
+    homepage:  http://user42.tuxfamily.org/gtk2-ex-widgetcursor/index.html
+    license:   http://www.gnu.org/licenses/gpl.html
 no_index:
     directory:
+        - t
+        - inc
         - devel
-resources:
-    homepage: http://www.geocities.com/user42_kevin/gtk2-ex-widgetcursor/index.html
-    license: http://www.gnu.org/licenses/#GPL
+        - examples
+        - maybe
+generated_by:       ExtUtils::MakeMaker version 6.55_02
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4
+optional_features:
+    maximum_tests:
+        description:  Have "make test" do as much as possible.
+        requires:
+            Parse::CPAN::Meta:   0
+            Test::DistManifest:  0
+            Test::NoWarnings:    0
+            Test::Pod:           1.00
+            Test::YAML::Meta:    0.13
+            YAML:                0
+            YAML::Syck:          0
+            YAML::Tiny:          0
+            YAML::XS:            0

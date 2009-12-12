@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License along
 with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
+Version 9, December 2009
+    - use 'blank-cursor' when available
+
 Version 8, March 2009
     - restore cursor in Gtk2::SpinButton of Gtk 2.14
 

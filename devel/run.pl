@@ -34,7 +34,7 @@ my $progname = $FindBin::Script;
   my $toplevel = Gtk2::Window->new ('toplevel');
   $toplevel->set_name ("my_toplevel_1");
   $toplevel->signal_connect (destroy => sub {
-                               print "run.pl: quit\n";
+                               print "$progname: quit\n";
                                Gtk2->main_quit;
                              });
 
@@ -60,12 +60,12 @@ my $progname = $FindBin::Script;
     $area->signal_connect
       (button_press_event => sub {
          if ($drag_cursor) {
-           print "run.pl: drag_cursor still set $drag_cursor\n";
+           print "$progname: drag_cursor still set $drag_cursor\n";
          }
          $drag_cursor = Gtk2::Ex::WidgetCursor->new (widget => $area,
                                                      cursor => 'hand1',
                                                      active => 1);
-         print "run.pl: drag cursor $drag_cursor\n";
+         print "$progname: drag cursor $drag_cursor\n";
        });
     $area->signal_connect
       (button_release_event => sub {
@@ -88,11 +88,11 @@ my $progname = $FindBin::Script;
   }
 
   my $base = Gtk2::Ex::WidgetCursor->new (widget => $area);
-  print "run.pl: base $base\n";
+  print "$progname: base $base\n";
   {
     my $button = Gtk2::Button->new_with_label ("Boat");
     $button->signal_connect (clicked => sub {
-                               print "run.pl: boat\n";
+                               print "$progname: boat\n";
                                $base->cursor('boat');
                                $base->active (1);
                              });
@@ -101,7 +101,7 @@ my $progname = $FindBin::Script;
   {
     my $button = Gtk2::Button->new_with_label ("Umbrella");
     $button->signal_connect (clicked => sub {
-                               print "run.pl: umbrella\n";
+                               print "$progname: umbrella\n";
                                $base->cursor('umbrella');
                                $base->active (1);
                              });
@@ -110,7 +110,7 @@ my $progname = $FindBin::Script;
   {
     my $button = Gtk2::Button->new_with_label ("Busy");
     $button->signal_connect (clicked => sub {
-                               print "run.pl: busy\n";
+                               print "$progname: busy\n";
                                Gtk2::Ex::WidgetCursor->busy;
                                sleep (3);
                              });
@@ -119,7 +119,7 @@ my $progname = $FindBin::Script;
   {
     my $wc = Gtk2::Ex::WidgetCursor->new (widget => $area,
                                           cursor => 'heart');
-    print "run.pl: heart $wc\n";
+    print "$progname: heart $wc\n";
     my $id;
     sub heart_on {
       $wc->active (1);
@@ -152,7 +152,7 @@ my $progname = $FindBin::Script;
   my $link_button = Gtk2::LinkButton->new ('http://localhost/index.html',
                                            'Link Button');
   # $link_button->set_size_request (-1, 50);
-  print "run.pl: link button flags", $link_button->flags, "\n";
+  print "$progname: link button flags", $link_button->flags, "\n";
   $vbox->pack_start ($link_button, 0, 0, 0);
 
   {
@@ -168,7 +168,7 @@ my $progname = $FindBin::Script;
     $button->signal_connect
       (clicked => sub {
          my $win = $toplevel->window;
-         print "run.pl: toplevel window $win\n";
+         print "$progname: toplevel window $win\n";
          print "  link button window    ",$link_button->window,"\n";
          $win->set_cursor ($button->get_active
                            ? Gtk2::Gdk::Cursor->new('gobbler') : undef);
@@ -181,7 +181,7 @@ my $progname = $FindBin::Script;
     $button->signal_connect
       (clicked => sub {
          Glib::Timeout->add (1000, sub {
-                               print "run.pl: busy\n";
+                               print "$progname: busy\n";
                                Gtk2::Ex::WidgetCursor->busy;
                                sleep (3);
                                return 0; # stop timer
@@ -267,18 +267,18 @@ my $progname = $FindBin::Script;
   $toplevel->set_screen ($screen);
   $toplevel->set_size_request (100, 100);
   $toplevel->signal_connect (destroy => sub {
-                               print "run.pl: second toplevel quit\n";
+                               print "$progname: second toplevel quit\n";
                                Gtk2->main_quit;
                              });
   $toplevel->{'mycursor'} = Gtk2::Ex::WidgetCursor->new (widget => $toplevel,
                                                          cursor => 'fleur',
                                                          active => 1);
 
-  print "run.pl: second toplevel $toplevel\n";
+  print "$progname: second toplevel $toplevel\n";
   $toplevel->show_all;
 }
 
-print "run.pl: toplevel widgets are\n";
+print "$progname: toplevel widgets are\n";
 foreach my $widget (Gtk2::Window->list_toplevels) {
   print "  $widget  ", $widget->get_name, "\n";
 

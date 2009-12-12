@@ -1,0 +1,12 @@
+diff -Nur -x '*.orig' -x '*~' wcursor/lib/Gtk2/Ex/WidgetCursor.pm wcursor.new/lib/Gtk2/Ex/WidgetCursor.pm
+--- wcursor/lib/Gtk2/Ex/WidgetCursor.pm	2009-08-10 19:44:17.000000000 +1000
++++ wcursor.new/lib/Gtk2/Ex/WidgetCursor.pm	2009-08-10 19:46:01.000000000 +1000
+@@ -768,7 +768,7 @@
+ 
+ =for me -- becomes /usr/share/doc/... in the deb
+ 
+-The F<examples> subdirectory in the WidgetCursor sources has some variously
++F</usr/share/doc/libgtk2-ex-widgetcursor-perl/examples/> has some variously
+ contrived sample programs.
+ 
+ =head1 WIDGETCURSOR OBJECTS

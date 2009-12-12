@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.55.
+signed via the Module::Signature module, version 0.61.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,26 +14,28 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 8624bcdae55baeef00cd11d5dfcfa60f68710a02 COPYING
-SHA1 4eacbd232ad9e9d725ee22c50c5c046a1878fd65 Changes
-SHA1 64f3e2810665ad19e1b5eec2b8b93bab859ad63a MANIFEST
-SHA1 234bd222c10628d5adfbdda3de5742f46651cfc3 MANIFEST.SKIP
-SHA1 8b36180db72254995c73af33a3b28aa92204cc61 META.yml
-SHA1 7072c09b113c1560df9ebf7b7df4b2fd9f8f85ed Makefile.PL
-SHA1 1177f24de3e5ba5e74d025fd17421f9f5f96b023 README
-SHA1 10531e6f91f81c6399e96bfcd19868f7d4aa2b45 debian/changelog
+SHA1 842745cb706f8f2126506f544492f7a80dbe29b3 COPYING
+SHA1 dae1a3a9672a866b393b101df1e8db5bb401e87b Changes
+SHA1 86f31ddd18a69425d7592ccfa77f34fa0a9e515d MANIFEST
+SHA1 bb78fa7bf2dfebdda59c9efb64db51b173fb9e2f MANIFEST.SKIP
+SHA1 c9e6890eef78f6c850b59e3c887c93dc745226d3 META.yml
+SHA1 157c7f3b069283e67175ce9ca8eedaa67f0381af Makefile.PL
+SHA1 84e25dff4527571761f7e35a3be4b5a1ed66ce25 README
+SHA1 9be78ea225f1c3648e0ca189a39696d7f2867114 debian/changelog
 SHA1 ac3478d69a3c81fa62e60f5c3696165a4e5e6ac4 debian/compat
-SHA1 557d1ffea697866b47ef8f8e1e7cfd1662b795f2 debian/control
-SHA1 8375f163f3d5a1850721304e7616ce39f9c8c3a5 debian/copyright
-SHA1 b5ff3a5f5fa33d93a7b0c5f595fd7c3269377fa0 debian/rules
-SHA1 c98e47776a934c694faa1a9bf69e86eee1e3c6fa debian/watch
+SHA1 06bf323f0938cbdcb0e98b273e96f739c1e75dcd debian/control
+SHA1 4e6fae85c26126c4fa8f1a89f2990de1a12e14a4 debian/copyright
+SHA1 255cee92f88ff634afa060f2023514d2fe37f0dd debian/patches/pod-examples-dir.diff
+SHA1 5e2f095f6bbeb235a2e7597c1c68001e93262bbf debian/rules
+SHA1 cd6707e12627a2da7d79d49877456afda46eccc9 debian/watch
 SHA1 1da7bdfcada0a79c8579e193f2b298a901a48c9e devel/busydestroy.pl
 SHA1 73d17477fcc5739dfb61705de6f84b41ecebdc27 devel/busynew.pl
 SHA1 a77ab489cc43fcbe955b3493881610e3b7148c2b devel/combo.pl
 SHA1 dfbc975f45cb386065448eee5027f90a7dd53a09 devel/entry.pl
+SHA1 538fe9f4f47bac949f346d1c8749af7ba853721e devel/invisible.pl
 SHA1 44eb1337cacf8349b3f10c3ecd883190f1415946 devel/linkbutton.pl
 SHA1 d9ed050a14c64a535d2e3dd8d67958710c040cf4 devel/no-window.pl
-SHA1 5669f4d57936fae5f068ee5fb9ed60873ccd7961 devel/run.pl
+SHA1 2a02a5fe35fbaeed5e552031a53b435c3e6decd6 devel/run.pl
 SHA1 c8dff5738d475a292b4725ca0c2d6d8c5db97d68 devel/spinner.pl
 SHA1 0aeb7dc55e2aa6c5c3527bad3af321291513335d devel/unbusy-idle.pl
 SHA1 cbb0cd9a11d7efc399edc09cd823a6707b79360c examples/cursortype.pl
@@ -41,14 +43,20 @@ SHA1 81aafd9200fc790cb48d0525dbdab7af2e4dc9a1 examples/heart.pl
 SHA1 22f3dd7792653045d62332113c5b7eed1253d63b examples/misc.pl
 SHA1 98512ebb694985257201d19840b71c65e6cb18af examples/priority.pl
 SHA1 06aec3e55a7d00d08e5218a9e0cbcb34ff106b00 examples/timebusy.pl
-SHA1 262a9f1982fd452b660c22447b7684798f25dac5 lib/Gtk2/Ex/WidgetCursor.pm
-SHA1 fca4318acfc0ba2bf85edffa963667fba643f8ef t/WidgetCursor.t
+SHA1 fff676a9981e20e51d8987b36323b1227a5945ee inc/MyMakeMakerExtras.pm
+SHA1 402415f3ca9a32192454d30e71887c90ceb66964 lib/Gtk2/Ex/WidgetCursor.pm
+SHA1 378b932305fb60823467c2af3c771fe3fc295a13 t/0-META-read.t
+SHA1 a343ed4dce96d05de51eed1ec065911584b96fce t/0-Test-DistManifest.t
+SHA1 bba0dc087cbe64d8f100ab77e6cef061c0bebf27 t/0-Test-Pod.t
+SHA1 d369522d8a9a887fdf1a1e14cb83e25fa2188727 t/0-Test-YAML-Meta.t
+SHA1 e0fc2626dfec2a1d554dea0294da572ed9263775 t/WidgetCursor.t
 SHA1 a958a042e4f922856f2f3d2262b19dcfa09f330e t/busy-first.t
-SHA1 a661a39e55a4127aecb1b97a631c4f01f7dce8c6 t/pod.t
+SHA1 7e65c1ad5410e42561d9864258715047b760a89a t/inc/MyTestHelpers.pm
+SHA1 160af26afa100c9d36471d82634044510bbf8c1f t/inc/Test/Weaken/Gtk2.pm
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
+Version: GnuPG v1.4.10 (GNU/Linux)
 
-iD8DBQFJuvIuLFMCIV9q3ToRAk+5AJ9toFqLWWkL6Z4ZG5I+u3vQESRtkACfeyVf
-HevNJeasdz45fWTF3EvgZW0=
-=8KhB
+iD8DBQFLJBAsLFMCIV9q3ToRAswuAKCChfmUZROSVT//XtI2yGmlwsAwOQCfeGmv
+UKfOZeWvF8573tG0KWk5x+o=
+=MCvF
 -----END PGP SIGNATURE-----

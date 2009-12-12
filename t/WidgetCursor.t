@@ -20,9 +20,18 @@
 use strict;
 use warnings;
 use Gtk2::Ex::WidgetCursor;
-use Test::More tests => 22;
+use Test::More tests => 29;
 
-my $want_version = 8;
+use FindBin;
+use File::Spec;
+use lib File::Spec->catdir($FindBin::Bin,'inc');
+use MyTestHelpers;
+use Test::Weaken::Gtk2;
+
+SKIP: { eval 'use Test::NoWarnings; 1'
+          or skip 'Test::NoWarnings not available', 1; }
+
+my $want_version = 9;
 ok ($Gtk2::Ex::WidgetCursor::VERSION >= $want_version, 'VERSION variable');
 ok (Gtk2::Ex::WidgetCursor->VERSION  >= $want_version, 'VERSION class method');
 ok (eval { Gtk2::Ex::WidgetCursor->VERSION($want_version); 1 },
@@ -42,37 +51,14 @@ ok (eval { Gtk2::Ex::WidgetCursor->VERSION($want_version); 1 },
 }
 
 require Gtk2;
-diag ("Perl-Gtk2 version ",Gtk2->VERSION);
-diag ("Perl-Glib version ",Glib->VERSION);
-diag ("Compiled against Glib version ",
-      Glib::MAJOR_VERSION(), ".",
-      Glib::MINOR_VERSION(), ".",
-      Glib::MICRO_VERSION(), ".");
-diag ("Running on       Glib version ",
-      Glib::major_version(), ".",
-      Glib::minor_version(), ".",
-      Glib::micro_version(), ".");
-diag ("Compiled against Gtk version ",
-      Gtk2::MAJOR_VERSION(), ".",
-      Gtk2::MINOR_VERSION(), ".",
-      Gtk2::MICRO_VERSION(), ".");
-diag ("Running on       Gtk version ",
-      Gtk2::major_version(), ".",
-      Gtk2::minor_version(), ".",
-      Gtk2::micro_version(), ".");
-
-sub main_iterations {
-  my $count = 0;
-  while (Gtk2->events_pending) {
-    $count++;
-    Gtk2->main_iteration_do (0);
-  }
-  diag "main_iterations(): ran $count events/iterations\n";
-}
+MyTestHelpers::glib_gtk_versions();
 
 SKIP: {
   Gtk2->disable_setlocale;  # leave LC_NUMERIC alone for version nums
-  if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 15; }
+  if (! Gtk2->init_check) { skip 'due to no DISPLAY available', 16; }
+
+  my $have_blank_cursor = scalar grep {$_->{'nick'} eq 'blank-cursor'}
+    Glib::Type->list_values('Gtk2::Gdk::CursorType');
 
 
   # In Perl-Gtk2 before 1.183, passing undef, ie. NULL, to
@@ -81,6 +67,14 @@ SKIP: {
   #
   my $default_display = Gtk2::Gdk::Display->get_default;
   my $display_name = $default_display->get_name;
+
+  # invisible cursor type
+  {
+    my $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor;
+    is ($cursor->type,
+        ($have_blank_cursor ? 'blank-cursor' : 'cursor-is-pixmap'),
+        'invisible cursor type (blank or pixmap as available)');
+  }
 
   # same invisible object on repeat calls
   is (Gtk2::Ex::WidgetCursor->invisible_cursor,
@@ -209,6 +203,46 @@ SKIP: {
     my @windows = grep {defined} $widget->Gtk2_Ex_WidgetCursor_windows;
     is_deeply (\@windows, [], ref($widget).' no window when unrealized');
   }
+}
+
+#-----------------------------------------------------------------------------
+# _container_recursively()
+
+{
+  my $label = Gtk2::Label->new;
+  is_deeply ([Gtk2::Ex::WidgetCursor::_container_recursively($label)],
+             [$label],
+             '_container_recursively - label only');
+
+  my $box = Gtk2::HBox->new;
+  is_deeply ([Gtk2::Ex::WidgetCursor::_container_recursively($box)],
+             [$box],
+             '_container_recursively - empty box');
+
+  $box->add ($label);
+  is_deeply ([Gtk2::Ex::WidgetCursor::_container_recursively($box)],
+             [$box, $label],
+             '_container_recursively - box containing label');
+
+  my $box2 = Gtk2::HBox->new;
+  $box2->add ($box);
+  is_deeply ([Gtk2::Ex::WidgetCursor::_container_recursively($box2)],
+             [$box2, $box, $label],
+             '_container_recursively - box2,box,label');
+}
+
+{
+  my $widget = Gtk2::Label->new;
+  my @want = ($widget);
+  foreach (1 .. 200) {
+    my $box = Gtk2::HBox->new;
+    $box->add ($widget);
+    $widget = $box;
+    unshift @want, $box;
+  }
+  is_deeply ([Gtk2::Ex::WidgetCursor::_container_recursively($widget)],
+             \@want,
+             '_container_recursively - ok on very deep nesting');
 }
 
 exit 0;
