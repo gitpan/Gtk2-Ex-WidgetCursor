@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.61.
+signed via the Module::Signature module, version 0.63.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -15,24 +15,28 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 842745cb706f8f2126506f544492f7a80dbe29b3 COPYING
-SHA1 dae1a3a9672a866b393b101df1e8db5bb401e87b Changes
-SHA1 86f31ddd18a69425d7592ccfa77f34fa0a9e515d MANIFEST
-SHA1 bb78fa7bf2dfebdda59c9efb64db51b173fb9e2f MANIFEST.SKIP
-SHA1 c9e6890eef78f6c850b59e3c887c93dc745226d3 META.yml
-SHA1 157c7f3b069283e67175ce9ca8eedaa67f0381af Makefile.PL
+SHA1 56df724fb9915034fda51d3e471c9f6163040425 Changes
+SHA1 230c22be4c3ad644a984fd7b234d0c1d034a01cb MANIFEST
+SHA1 2e9c13dc6e456ea6b5c3be76b743a63a0442e035 MANIFEST.SKIP
+SHA1 e658bb236ee93c7144e57b98cffaed9e36c78311 META.yml
+SHA1 9cf4fa321098e5af26993d390883446399dd299d Makefile.PL
 SHA1 84e25dff4527571761f7e35a3be4b5a1ed66ce25 README
-SHA1 9be78ea225f1c3648e0ca189a39696d7f2867114 debian/changelog
+SHA1 9f3acd3c79b1e9b5135ab51d5a04c2c819dcdd41 debian/changelog
 SHA1 ac3478d69a3c81fa62e60f5c3696165a4e5e6ac4 debian/compat
-SHA1 06bf323f0938cbdcb0e98b273e96f739c1e75dcd debian/control
-SHA1 4e6fae85c26126c4fa8f1a89f2990de1a12e14a4 debian/copyright
+SHA1 498fbb6d30c6d76afe9811f3992db6e07471e72a debian/control
+SHA1 c360820d928a2b5b54d4a3193f2b21398c8c9ad2 debian/copyright
 SHA1 255cee92f88ff634afa060f2023514d2fe37f0dd debian/patches/pod-examples-dir.diff
 SHA1 5e2f095f6bbeb235a2e7597c1c68001e93262bbf debian/rules
-SHA1 cd6707e12627a2da7d79d49877456afda46eccc9 debian/watch
+SHA1 61652cd1568dcf2614df833eba241755eee34e89 debian/source/format
+SHA1 105891528b4dbf8b51b278453d97ad5bc0e5a339 debian/watch
+SHA1 9fbbb68d2180ff9f63d17941deb138d54543d940 devel/GNUmakefile
+SHA1 eee2bd1c0b787a42a236ef9c50533747093aa6d2 devel/TestWithoutGtk2Things.pm
 SHA1 1da7bdfcada0a79c8579e193f2b298a901a48c9e devel/busydestroy.pl
 SHA1 73d17477fcc5739dfb61705de6f84b41ecebdc27 devel/busynew.pl
 SHA1 a77ab489cc43fcbe955b3493881610e3b7148c2b devel/combo.pl
 SHA1 dfbc975f45cb386065448eee5027f90a7dd53a09 devel/entry.pl
-SHA1 538fe9f4f47bac949f346d1c8749af7ba853721e devel/invisible.pl
+SHA1 6dccb1c0367a546a545a4b29f87a6a84b4227df7 devel/invisible-blank.c
+SHA1 4b2bb179c1382c47555f3d56fedad3f5dbf7ad17 devel/invisible.pl
 SHA1 44eb1337cacf8349b3f10c3ecd883190f1415946 devel/linkbutton.pl
 SHA1 d9ed050a14c64a535d2e3dd8d67958710c040cf4 devel/no-window.pl
 SHA1 2a02a5fe35fbaeed5e552031a53b435c3e6decd6 devel/run.pl
@@ -43,20 +47,21 @@ SHA1 81aafd9200fc790cb48d0525dbdab7af2e4dc9a1 examples/heart.pl
 SHA1 22f3dd7792653045d62332113c5b7eed1253d63b examples/misc.pl
 SHA1 98512ebb694985257201d19840b71c65e6cb18af examples/priority.pl
 SHA1 06aec3e55a7d00d08e5218a9e0cbcb34ff106b00 examples/timebusy.pl
-SHA1 fff676a9981e20e51d8987b36323b1227a5945ee inc/MyMakeMakerExtras.pm
-SHA1 402415f3ca9a32192454d30e71887c90ceb66964 lib/Gtk2/Ex/WidgetCursor.pm
-SHA1 378b932305fb60823467c2af3c771fe3fc295a13 t/0-META-read.t
-SHA1 a343ed4dce96d05de51eed1ec065911584b96fce t/0-Test-DistManifest.t
-SHA1 bba0dc087cbe64d8f100ab77e6cef061c0bebf27 t/0-Test-Pod.t
-SHA1 d369522d8a9a887fdf1a1e14cb83e25fa2188727 t/0-Test-YAML-Meta.t
-SHA1 e0fc2626dfec2a1d554dea0294da572ed9263775 t/WidgetCursor.t
-SHA1 a958a042e4f922856f2f3d2262b19dcfa09f330e t/busy-first.t
-SHA1 7e65c1ad5410e42561d9864258715047b760a89a t/inc/MyTestHelpers.pm
-SHA1 160af26afa100c9d36471d82634044510bbf8c1f t/inc/Test/Weaken/Gtk2.pm
+SHA1 5558edc5e44856cc82bb7648d031bfd6c64a346d inc/MyMakeMakerExtras.pm
+SHA1 63427b66eb26f013f10c835b0cf320c93361f310 inc/my_pod2html
+SHA1 1070e6dbb8181ed0b777a005882f030092914143 lib/Gtk2/Ex/WidgetCursor.pm
+SHA1 d5d5c83c83918d8c97ca79e92ea840cdf277f01f t/0-META-read.t
+SHA1 37abd43b41068804ea4bb099fdd89af21be82926 t/0-Test-DistManifest.t
+SHA1 8f93fb4c8f0424a4442cc93c9a2e86342ef55281 t/0-Test-Pod.t
+SHA1 fb517c2fae5ddac559318bf6a224949115ea3129 t/0-Test-YAML-Meta.t
+SHA1 e5b9059d5e27d380fc9418095d773ad5f96baa06 t/MyTestHelpers.pm
+SHA1 9abe1a27b5a3bc979a0c0da06e8d34135d6a6222 t/WidgetCursor.t
+SHA1 e351e7c1798646a44b0179d7f50e08395bf7308b t/busy-first.t
+SHA1 b13fc43e11443274228fccf045a99a35abc45d89 t/overload.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (GNU/Linux)
 
-iD8DBQFLJBAsLFMCIV9q3ToRAswuAKCChfmUZROSVT//XtI2yGmlwsAwOQCfeGmv
-UKfOZeWvF8573tG0KWk5x+o=
-=MCvF
+iD8DBQFMBM4ELFMCIV9q3ToRAsp4AJ0dniDSgNj0GNpsO2LGPao+sU9NNQCfSyVq
+bm7xiQTTAHUal3GOvbBkf/E=
+=jUIT
 -----END PGP SIGNATURE-----

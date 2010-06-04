@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2007, 2008, 2009 Kevin Ryde
+# Copyright 2007, 2008, 2009, 2010 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -36,6 +36,10 @@ MyMakeMakerExtras::WriteMakefile
    PREREQ_PM    => {
                     # any version should be ok
                     'Gtk2' => 0,
+                    'Glib::Object::Subclass' => 0,
+
+                    # 1.18 for pure-perl refaddr() fix
+                    'Scalar::Util' => '1.18',
                    },
 
    META_MERGE

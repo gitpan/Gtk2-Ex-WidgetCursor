@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009 Kevin Ryde
+# Copyright 2007, 2008, 2009, 2010 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -22,12 +22,12 @@ use warnings;
 use Carp;
 use Gtk2;
 use List::Util;
-use Scalar::Util;
+use Scalar::Util 1.18; # 1.18 for pure-perl refaddr() fix
 
-our $VERSION = 9;
+# uncomment this to run the ### lines
+#use Smart::Comments;
 
-# set this to 1 for some diagnostic prints
-use constant DEBUG => 0;
+our $VERSION = 10;
 
 
 #------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ sub new {
 
 sub DESTROY {
   my ($self) = @_;
-  if (DEBUG) { print "DESTROY $self\n"; }
+  ### DESTROY: "$self"
   _splice_out (\@wobjs, $self);
   if ($self->{'active'}) {
     _wobj_deactivated ($self);
@@ -210,21 +210,25 @@ sub _wobj_deactivated {
 # newly turned on or created on
 sub _wobj_activated {
   my ($self) = @_;
+  ### _wobj_activated
 
   if ($self->{'include_children'}) {
     # go through widgets in other wobjs as well as ourselves since they may
     # be affected if they're children of one of ours (%done skips duplicates
     # among the lists)
+    ### include_children other wobjs
     my %done;
     foreach my $wobj (@wobjs) {
       foreach my $widget (@{$wobj->{'widgets'}}) {
         if (! $widget) { next; } # possible undef by weakening
-        $done{$widget+0} ||= do { _update_widget ($widget); 1 };
+        $done{Scalar::Util::refaddr($widget)}
+          ||= do { _update_widget ($widget); 1 };
       }
     }
 
     # special handling for children of certain types that might be present
     # deep in the tree
+    ### include_children special TextView etc
     foreach my $widget (@{$self->{'widgets'}}) {
       if (! $widget) { next; } # possible undef by weakening
 
@@ -232,7 +236,8 @@ sub _wobj_activated {
         if ($widget->isa('Gtk2::Entry')
             || $widget->isa('Gtk2::TextView')
             || _widget_is_combo_eventbox ($widget)) {
-          $done{$widget+0} ||= do { _update_widget ($widget); 1 };
+          $done{Scalar::Util::refaddr($widget)}
+            ||= do { _update_widget ($widget); 1 };
         }
       }
     }
@@ -249,20 +254,16 @@ sub _wobj_activated {
 sub _update_widget {
   my ($widget) = @_;
   if (! $widget) { return; }  # possible undef from weakening
-  if (DEBUG) { print "_update_widget $widget  ", $widget->get_name, "\n"; }
+  ### _update_widget: "$widget", $widget->get_name
 
   # find wobj with priority on this $widget
   my $wobj = List::Util::first
     { $_->{'active'} && _wobj_applies_to_widget($_,$widget)} @wobjs;
 
   my $old_wobj = $widget->{__PACKAGE__.'.installed'};
-  if (DEBUG) { print "  wobj was ",
-                 defined $old_wobj
-                   ? "$old_wobj=".($old_wobj->{'cursor'}||'undef') : 'undef',
-                     " now ",
-                       defined $wobj
-                         ? "$wobj=".($wobj->{'cursor'}||'undef') : 'undef',
-                           "\n"; }
+  ### wobj was: defined $old_wobj && $old_wobj->{'cursor'}
+  ### now:      defined $wobj     && $wobj->{'cursor'}
+
   if (($wobj||0) == ($old_wobj||0)) { return; } # unchanged
 
   # forget this widget under $old_wobj
@@ -282,8 +283,7 @@ sub _update_widget {
                     ? Gtk2::Gdk::Cursor->new_for_display ($widget->get_display,
                                                           $hack_cursor)
                     : undef);
-      if (DEBUG) { print "  set_cursor $win back to ",
-                     defined $cursor ? $cursor->type : 'undef',"\n"; }
+      ### set_cursor back to: "$win", $cursor && $cursor->type
       $win->set_cursor ($cursor);
     }
     return;
@@ -293,7 +293,7 @@ sub _update_widget {
 
   my @windows = $widget->Gtk2_Ex_WidgetCursor_windows;
   if (! defined $windows[0]) {
-    if (DEBUG) { print "  not realized, defer setting\n"; }
+    ### not realized, defer setting
     $widget->{__PACKAGE__.'.realize_id'} ||=
       $widget->signal_connect (realize => \&_do_widget_realize);
     return;
@@ -303,7 +303,7 @@ sub _update_widget {
   { my $aref = $wobj->{'installed_widgets'};
     push @$aref, $widget;
     Scalar::Util::weaken ($aref->[-1]);
-    if (DEBUG) { print "  gives installed_widgets ",join(' ',@$aref),"\n"; }
+    ### gives installed_widgets: join(' ',@$aref)
   }
 
   # note this wobj under the widget
@@ -314,8 +314,7 @@ sub _update_widget {
   my $cursor = _resolve_cursor ($wobj, $widget);
   foreach my $win (@windows) {
     $win or next;
-    if (DEBUG) { print "  set_cursor $win ",
-                   defined $cursor ? $cursor->type:'undef', "\n"; }
+    ### set_cursor: "$win", $cursor && $cursor->type
     $win->set_cursor ($cursor);
   }
 }
@@ -323,7 +322,7 @@ sub _update_widget {
 # 'realized' handler on a WidgetCursor affected widget
 sub _do_widget_realize {
   my ($widget) = @_;
-  if (DEBUG) { print "now realized\n"; }
+  ### now realized
   $widget->signal_handler_disconnect
     (delete $widget->{__PACKAGE__.'.realize_id'});
   _update_widget ($widget);
@@ -594,12 +593,12 @@ my $realize_id;
 sub busy {
   my ($class) = @_;
   my @widgets = Gtk2::Window->list_toplevels;
-  if (DEBUG) { print "busy on toplevels ",join(' ',@widgets),"\n"; }
+  ### busy on toplevels: join(' ',@widgets)
 
   if ($busy_wc) {
     $busy_wc->add_widgets (@widgets);
   } else {
-    if (DEBUG) { print "$class->busy: new\n"; }
+    ### new busy with class: $class
     $busy_wc = $class->new (widgets          => \@widgets,
                             cursor           => 'watch',
                             include_children => 1,
@@ -624,8 +623,8 @@ sub busy {
 }
 
 # While busy notice extra toplevels which have been realized.
-# (It's best for us to apply the cursor setting after the realize, so it's
-# there ready for when the map is done.)
+# The cursor setting is applied at the realize so it's there ready for when
+# the map is done.
 sub _do_busy_realize_emission {
   my ($invocation_hint, $param_list) = @_;
   my ($widget) = @$param_list;
@@ -641,7 +640,7 @@ sub _do_busy_realize_emission {
 # before the time they take.
 #
 sub _busy_idle_handler {
-  if (DEBUG) { print "_busy_idle_handler: finished\n"; }
+  ### _busy_idle_handler finished
   $busy_id = undef;
   if ($busy_wc) { $busy_wc->unbusy; }
   return 0; # Glib::SOURCE_REMOVE, one run only
@@ -653,13 +652,13 @@ sub unbusy {
   # Some freaky stuff can happen during perl "global destruction" with
   # classes being destroyed and disconecting emission hooks on their own,
   # provoking warnings from code like the following that does a cleanup
-  # itself.  Fairly confident that doesn't apply to Gtk2::Widget, it
-  # probably, hopefully, never gets destroyed, or at least not until well
-  # after any Perl code might get a chance to call unbusy().
+  # itself.  Fairly confident that doesn't apply to Gtk2::Widget because
+  # that class probably, hopefully, maybe, never gets destroyed, or at least
+  # not until well after any Perl code might get a chance to call unbusy().
   #
   if ($realize_id) {
     Gtk2::Widget->signal_remove_emission_hook (realize => $realize_id);
-    $realize_id = undef;
+    undef $realize_id;
   }
 
   if ($busy_id) {
@@ -681,12 +680,12 @@ sub unbusy {
 sub _flush_mapped_widgets {
   my @widget_list = @_;
   my %done;
-  if (DEBUG) { print "_flush_mapped_widgets:"; }
+  ### _flush_mapped_widgets
   foreach my $widget (@widget_list) {
     if ($widget->mapped) {
       my $display = $widget->get_display;
-      $done{$display+0} ||= do {
-        if (DEBUG) { print "  $display\n"; }
+      $done{Scalar::Util::refaddr($display)} ||= do {
+        ### flush display: "$display"
         $display->flush;
         1
       };
@@ -696,6 +695,16 @@ sub _flush_mapped_widgets {
 
 
 #------------------------------------------------------------------------------
+
+# list_values() creates a slew of hash records, so don't want to do that on
+# every invisible_cursor() call.  Doing it once at BEGIN time also allows
+# the result to be inlined and the unused code discarded.
+#
+use constant _HAVE_BLANK_CURSOR
+  => (!! List::Util::first
+      {$_->{'nick'} eq 'blank-cursor'}
+      Glib::Type->list_values('Gtk2::Gdk::CursorType'));
+### _HAVE_BLANK_CURSOR: _HAVE_BLANK_CURSOR()
 
 sub invisible_cursor {
   my ($class, $target) = @_;
@@ -713,18 +722,20 @@ sub invisible_cursor {
       || croak "invisible_cursor(): get_display undef on $target";
   }
 
-  return ($display->{__PACKAGE__.'.invisible_cursor'}
-          ||= do {
-            if (DEBUG) { print "invisible_cursor new for $display\n"; }
-            eval {
-              Gtk2::Gdk::Cursor->new_for_display ($display,'blank-cursor')
-            } || do {
+  if (_HAVE_BLANK_CURSOR) {
+    # gdk_cursor_new_for_display() returns same object each time so no need
+    # to cache, though being a Glib::Boxed it's a new perl object every time
+    return Gtk2::Gdk::Cursor->new_for_display ($display,'blank-cursor');
+  } else {
+    return ($display->{__PACKAGE__.'.invisible_cursor'}
+            ||= do {
+              ### invisible_cursor() new for: "$display"
               my $window = $display->get_default_screen->get_root_window;
               my $mask = Gtk2::Gdk::Bitmap->create_from_data ($window,"\0",1,1);
               my $color = Gtk2::Gdk::Color->new (0,0,0);
               Gtk2::Gdk::Cursor->new_from_pixmap ($mask,$mask,$color,$color,0,0);
-            }
-          });
+            });
+  }
 }
 
 
@@ -952,24 +963,23 @@ Return a C<Gtk2::Gdk::Cursor> object which is invisible, ie. displays no
 cursor at all.  This is the C<blank-cursor> in Gtk 2.16 and up, or for
 earlier versions a "no pixels set" cursor as described by C<gdk_cursor_new>.
 
-With no arguments (or C<undef>) the cursor is for the default display per
+With no arguments (or C<undef>) the cursor is for the default display
 C<< Gtk2::Gdk::Display->get_default >>.  If your program only uses one
 display then that's all you need.
 
     my $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor;
 
-For multiple displays note that a cursor is a per-display resource, so you
-must pass a C<$target>.  This can be a C<Gtk2::Gdk::Display>, or anything
-with a C<get_display> method, including C<Gtk2::Widget>,
-C<Gtk2::Gdk::Window>, C<Gtk2::Gdk::Drawable>, another C<Gtk2::Gdk::Cursor>,
-etc.
+For multiple displays a cursor is a per-display resource so you must pass a
+C<$target>.  This can be a C<Gtk2::Gdk::Display>, or anything with a
+C<get_display> method, including C<Gtk2::Widget>, C<Gtk2::Gdk::Window>,
+C<Gtk2::Gdk::Drawable>, another C<Gtk2::Gdk::Cursor>, etc.
 
     my $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor ($widget);
 
 When passing a widget note the display comes from its toplevel
-C<Gtk2::Window> parent, so the widget must have been added in as a child
-somewhere under a toplevel (or be a toplevel itself).  Until then
-C<invisible_cursor> will croak.
+C<Gtk2::Window> parent and until added in as a child somewhere under a
+toplevel its C<get_display> is the default display and C<invisible_cursor>
+will give a cursor for that display.
 
 The invisible cursor is cached against the display, so repeated calls don't
 make a new one every time.
@@ -1023,7 +1033,7 @@ http://user42.tuxfamily.org/gtk2-ex-widgetcursor/index.html
 
 =head1 LICENSE
 
-Copyright 2007, 2008, 2009 Kevin Ryde
+Copyright 2007, 2008, 2009, 2010 Kevin Ryde
 
 Gtk2-Ex-WidgetCursor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by the

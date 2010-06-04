@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright 2007, 2008, 2009 Kevin Ryde
+# Copyright 2007, 2008, 2009, 2010 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -22,36 +22,52 @@ use warnings;
 use Gtk2::Ex::WidgetCursor;
 use Test::More tests => 29;
 
-use FindBin;
-use File::Spec;
-use lib File::Spec->catdir($FindBin::Bin,'inc');
+use lib 't';
 use MyTestHelpers;
-use Test::Weaken::Gtk2;
 
-SKIP: { eval 'use Test::NoWarnings; 1'
-          or skip 'Test::NoWarnings not available', 1; }
+BEGIN {
+ SKIP: { eval 'use Test::NoWarnings; 1'
+           or skip 'Test::NoWarnings not available', 1; }
+}
 
-my $want_version = 9;
-ok ($Gtk2::Ex::WidgetCursor::VERSION >= $want_version, 'VERSION variable');
-ok (Gtk2::Ex::WidgetCursor->VERSION  >= $want_version, 'VERSION class method');
-ok (eval { Gtk2::Ex::WidgetCursor->VERSION($want_version); 1 },
-    "VERSION class check $want_version");
-{ my $check_version = $want_version + 1000;
+#-----------------------------------------------------------------------------
+# VERSION
+
+{
+  my $want_version = 10;
+  is ($Gtk2::Ex::WidgetCursor::VERSION, $want_version, 'VERSION variable');
+  is (Gtk2::Ex::WidgetCursor->VERSION,  $want_version, 'VERSION class method');
+  ok (eval { Gtk2::Ex::WidgetCursor->VERSION($want_version); 1 },
+      "VERSION class check $want_version");
+  my $check_version = $want_version + 1000;
   ok (! eval { Gtk2::Ex::WidgetCursor->VERSION($check_version); 1 },
       "VERSION class check $check_version");
-}
-{
+
   my $wc = Gtk2::Ex::WidgetCursor->new;
-  ok ($wc->VERSION >= $want_version, 'VERSION object method');
+  is ($wc->VERSION, $want_version, 'VERSION object method');
   ok (eval { $wc->VERSION($want_version); 1 },
       "VERSION object check $want_version");
-  my $check_version = $want_version + 1000;
   ok (! eval { $wc->VERSION($check_version); 1 },
       "VERSION object check $check_version");
 }
 
+#-----------------------------------------------------------------------------
 require Gtk2;
 MyTestHelpers::glib_gtk_versions();
+
+# return true if two Glib::Boxed objects $b1 and $b2 point to the same
+# underlying C object
+sub glib_boxed_equal {
+  my ($b1, $b2) = @_;
+  my $pspec = Glib::ParamSpec->boxed ('equal', 'equal', 'blurb', ref($b1),
+                                      Glib::G_PARAM_READWRITE());
+  if ($pspec->can('values_cmp')) {
+    # new in Perl-Glib 1.220
+    return $pspec->values_cmp($b1,$b2) == 0;
+  } else {
+    return 1;
+  }
+}
 
 SKIP: {
   Gtk2->disable_setlocale;  # leave LC_NUMERIC alone for version nums
@@ -59,6 +75,7 @@ SKIP: {
 
   my $have_blank_cursor = scalar grep {$_->{'nick'} eq 'blank-cursor'}
     Glib::Type->list_values('Gtk2::Gdk::CursorType');
+  diag "have_blank_cursor is $have_blank_cursor"; 
 
 
   # In Perl-Gtk2 before 1.183, passing undef, ie. NULL, to
@@ -76,9 +93,13 @@ SKIP: {
         'invisible cursor type (blank or pixmap as available)');
   }
 
-  # same invisible object on repeat calls
-  is (Gtk2::Ex::WidgetCursor->invisible_cursor,
-      Gtk2::Ex::WidgetCursor->invisible_cursor);
+  # In the current code this ends up depending on
+  # gdk_cursor_new_for_display() to cache 'blank-cursor'.  Want to know if
+  # it doesn't, since the WidgetCursor docs claim invisible_cursor() caches.
+  #
+  ok (glib_boxed_equal (Gtk2::Ex::WidgetCursor->invisible_cursor,
+                        Gtk2::Ex::WidgetCursor->invisible_cursor),
+      'same invisible cursor object on repeat calls');
 
   # different invisible object on different displays
  SKIP: {

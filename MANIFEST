@@ -6,22 +6,27 @@ debian/control
 debian/copyright
 debian/patches/pod-examples-dir.diff
 debian/rules
+debian/source/format
 debian/watch
 devel/busydestroy.pl
 devel/busynew.pl
 devel/combo.pl
 devel/entry.pl
+devel/GNUmakefile
+devel/invisible-blank.c
 devel/invisible.pl
 devel/linkbutton.pl
 devel/no-window.pl
 devel/run.pl
 devel/spinner.pl
+devel/TestWithoutGtk2Things.pm
 devel/unbusy-idle.pl
 examples/cursortype.pl
 examples/heart.pl
 examples/misc.pl
 examples/priority.pl
 examples/timebusy.pl
+inc/my_pod2html
 inc/MyMakeMakerExtras.pm
 lib/Gtk2/Ex/WidgetCursor.pm
 Makefile.PL
@@ -34,7 +39,7 @@ t/0-Test-DistManifest.t
 t/0-Test-Pod.t
 t/0-Test-YAML-Meta.t
 t/busy-first.t
-t/inc/MyTestHelpers.pm
-t/inc/Test/Weaken/Gtk2.pm
+t/MyTestHelpers.pm
+t/overload.t
 t/WidgetCursor.t
 META.yml                                 Module meta-data (added by MakeMaker)
