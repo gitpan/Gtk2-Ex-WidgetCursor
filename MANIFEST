@@ -17,9 +17,10 @@ devel/invisible-blank.c
 devel/invisible.pl
 devel/linkbutton.pl
 devel/no-window.pl
+devel/overload.pl
 devel/run.pl
+devel/set-cursor.pl
 devel/spinner.pl
-devel/TestWithoutGtk2Things.pm
 devel/unbusy-idle.pl
 examples/cursortype.pl
 examples/heart.pl

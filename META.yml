@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Gtk2-Ex-WidgetCursor
-version:            10
+version:            11
 abstract:           Mouse pointer cursor management for Gtk widgets.
 author:
     - Kevin Ryde <user42@zip.com.au>
@@ -34,12 +34,12 @@ optional_features:
         description:  Stuff used variously for development.
         requires:
             Pod::Simple::HTML:  0
+            warnings::unused:   0
     maximum_tests:
         description:  Have "make test" do as much as possible.
         requires:
             Parse::CPAN::Meta:   0
             Test::DistManifest:  0
-            Test::NoWarnings:    0
             Test::Pod:           1.00
             Test::YAML::Meta:    0.15
             YAML:                0

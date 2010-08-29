@@ -18,26 +18,35 @@
 # with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# A heart cursor activated and deactivated under a timer.
+# use strict;
+# use warnings;
 
-use strict;
-use warnings;
-use Gtk2 '-init';
-use Gtk2::Ex::WidgetCursor;
-
-my $toplevel = Gtk2::Window->new ('toplevel');
-$toplevel->signal_connect (destroy => sub { Gtk2->main_quit; });
-$toplevel->set_default_size (300, 200);
-
-my $heart = Gtk2::Ex::WidgetCursor->new (widget => $toplevel,
-                                         cursor => 'heart');
-sub beat {
-  $heart->active (! $heart->active);   # toggle
-  return 1; # Glib::SOURCE_CONTINUE
+{
+  package MyOverloadWidget;
+  use Carp;
+  use overload
+    'bool' => \&bool,
+    '0+' => \&numize,
+    '+' => \&add;
+  sub new {
+    my ($class) = @_;
+    return bless {}, $class;
+  }
+  sub add {
+    my ($x, $y, $swap) = @_;
+    croak "I am not in the adding mood";
+  }
+  sub numize {
+    my ($x) = @_;
+    croak "I am not in the numizing mood";
+  }
+  sub bool {
+    my ($x) = @_;
+    croak "I am not in the boolean mood";
+  }
 }
-Glib::Timeout->add (800, \&beat);  # 800 milliseconds
 
-
-$toplevel->show_all;
-Gtk2->main;
-exit 0;
+my $obj = MyOverloadWidget->new;
+print int($obj+0);
+printf "%d\n", $obj;
+print $obj+0;

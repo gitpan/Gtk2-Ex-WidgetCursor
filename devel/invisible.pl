@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 # Copyright 2009, 2010 Kevin Ryde
 
@@ -29,8 +29,44 @@ use List::Util;
 use FindBin;
 my $progname = $FindBin::Script;
 
-use lib::abs '.';
-use TestWithoutGtk2Things 'blank-cursor';
+# use lib::abs '.';
+# use TestWithoutGtk2Things 'verbose', 'blank-cursor';
+
+{
+  require Gtk2;
+  require Gtk2::Ex::WidgetCursor;
+  Gtk2->init;
+
+  my $toplevel = Gtk2::Window->new ('toplevel');
+  $toplevel->signal_connect (destroy => sub {
+                               print "$progname: quit\n";
+                               Gtk2->main_quit;
+                             });
+
+  $toplevel->realize;
+
+  my $win = $toplevel->window;
+  my $display = $win->get_display;
+  my $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor;
+  # my $cursor = Gtk2::Gdk::Cursor->new_for_display ($display, 'blank-cursor');
+  print $cursor,"\n";
+  $win->set_cursor ($cursor);
+
+  my $pspec = $win->find_property ('cursor');
+  if ($pspec) {
+    print "win has cursor property\n";
+    my $get = $win->get('cursor');
+    my $type = $get->type;
+    print "  $get type='$type'\n";
+  } else {
+    print "no cursor property\n";
+  }
+
+  $toplevel->show_all;
+  Gtk2->main;
+  exit 0;
+}
+
 
 {
   # can list_values() before gtk_init()
@@ -52,12 +88,14 @@ use TestWithoutGtk2Things 'blank-cursor';
   print $deparse->coderef2text(\&Gtk2::Ex::WidgetCursor::invisible_cursor);
   exit 0;
 }
+
 {
   # undef until gtk_init()
   require Gtk2;
   print "default display: ",Gtk2::Gdk::Display->get_default,"\n";
   exit 0;
 }
+
 {
   # no memory leak
   require Gtk2;
@@ -75,37 +113,3 @@ use TestWithoutGtk2Things 'blank-cursor';
   print "display when no toplevel: ",$label->get_display,"\n";
   exit 0;
 }
-
-
-
-require Gtk2;
-require Gtk2::Ex::WidgetCursor;
-Gtk2->init;
-
-my $toplevel = Gtk2::Window->new ('toplevel');
-$toplevel->signal_connect (destroy => sub {
-                             print "$progname: quit\n";
-                             Gtk2->main_quit;
-                           });
-
-$toplevel->realize;
-
-my $win = $toplevel->window;
-my $display = $win->get_display;
-my $cursor = Gtk2::Gdk::Cursor->new_for_display ($display, 'blank-cursor');
-print $cursor,"\n";
-$win->set_cursor ($cursor);
-
-my $pspec = $win->find_property ('cursor');
-if ($pspec) {
-  print "win has cursor property\n";
-  my $get = $win->get('cursor');
-  my $type = $get->type;
-  print "  $get type='$type'\n";
-} else {
-  print "no cursor property\n";
-}
-
-$toplevel->show_all;
-Gtk2->main;
-exit 0;

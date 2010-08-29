@@ -27,7 +27,7 @@ use Scalar::Util 1.18; # 1.18 for pure-perl refaddr() fix
 # uncomment this to run the ### lines
 #use Smart::Comments;
 
-our $VERSION = 10;
+our $VERSION = 11;
 
 
 #------------------------------------------------------------------------------
@@ -263,6 +263,7 @@ sub _update_widget {
   my $old_wobj = $widget->{__PACKAGE__.'.installed'};
   ### wobj was: defined $old_wobj && $old_wobj->{'cursor'}
   ### now:      defined $wobj     && $wobj->{'cursor'}
+  ### window:   "@{[$widget->window||'undef']}"
 
   if (($wobj||0) == ($old_wobj||0)) { return; } # unchanged
 
@@ -628,9 +629,12 @@ sub busy {
 sub _do_busy_realize_emission {
   my ($invocation_hint, $param_list) = @_;
   my ($widget) = @$param_list;
-  if ($widget->isa ('Gtk2::Window')) {
-    $busy_wc->add_widgets (Gtk2::Window->list_toplevels);
-  }
+  ### WidgetCursor _do_busy_realize_emission(): "$widget"
+#   if ($widget->isa ('Gtk2::Window')) {
+#     $busy_wc->add_widgets (Gtk2::Window->list_toplevels);
+#     ### _do_busy_realize_emission() flush
+#     $widget->get_display->flush;
+#   }
   return 1; # stay connected
 }
 
@@ -648,6 +652,7 @@ sub _busy_idle_handler {
 
 sub unbusy {
   # my ($class_or_self) = @_;
+  ### WidgetCursor unbusy()
 
   # Some freaky stuff can happen during perl "global destruction" with
   # classes being destroyed and disconecting emission hooks on their own,

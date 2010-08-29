@@ -55,6 +55,8 @@
 \.def$
 ^dll\.base$
 ^dll\.exp$
+# msdos compiler stuff using ms c
+\.pdb$
 
 # built - cdbs and debhelper
 ^debian/stamp-
@@ -67,12 +69,14 @@
 ^[^/]+\.c$
 # built .o compiled and .bs from .xs
 \.o$
+\.obj$
 \.bs$
 #
 #(^|/)[A-Z][A-Za-z0-9_]*\.c$
 #/[^Z])[^/]+\.c$
 
 # built - configury
+^a\.out$
 ^conftest
 ^config\.h$
 ^myconfig\.h$
@@ -109,6 +113,12 @@ devel/h2xs/TestConstFoo/
 ^devel/grandom-[a-z]+$
 # special case widget-cursor executables
 ^devel/invisible-blank$
+# special case x'or executables
+^devel/gtk-gc-colour$
+# special case ipw and other executables
+^devel/misc$
+# special case m-i executables
+^devel/gen-bits$
 
 
 # special htmlext environs

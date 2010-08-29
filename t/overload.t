@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 # Copyright 2010 Kevin Ryde
 
@@ -21,52 +21,53 @@ use strict;
 use warnings;
 use Test::More;
 
+# uncomment this to run the ### lines
+#use Smart::Comments;
+
 use lib 't';
 use MyTestHelpers;
+BEGIN { MyTestHelpers::nowarnings() }
 
-BEGIN {
-  require Gtk2;
-  Gtk2->disable_setlocale;  # leave LC_NUMERIC alone for version nums
-  Gtk2->init_check
-    or plan skip_all => 'due to no DISPLAY available';
-
-  plan tests => 3;
-
- SKIP: { eval 'use Test::NoWarnings; 1'
-           or skip 'Test::NoWarnings not available', 1; }
-}
+use Gtk2::Ex::WidgetCursor;
 
 {
   package MyOverloadWidget;
+  use Gtk2;
   use Glib::Object::Subclass 'Gtk2::DrawingArea';
   use Carp;
   use overload '+' => \&add, fallback => 1;
   sub add {
     my ($x, $y, $swap) = @_;
+    ### MyOverloadWidget add()
     croak "I am not in the adding mood";
   }
 }
 
-require Gtk2::Ex::WidgetCursor;
+Gtk2->disable_setlocale;  # leave LC_NUMERIC alone for version nums
+Gtk2->init_check
+  or plan skip_all => 'due to no DISPLAY available';
 
-{
-  my $widget = MyOverloadWidget->new;
-  ok (! eval { my $x = $widget+0; 1 },
-      'widget+0 throws error');
-
-  my $toplevel = Gtk2::Window->new;
-  $toplevel->add ($widget);
-  $toplevel->show_all;
-  MyTestHelpers::main_iterations();
-
-  my $wobj = Gtk2::Ex::WidgetCursor->new (widgets => [$toplevel,$widget],
-                                          active => 1,
-                                          include_children => 1,
-                                          cursor => 'invisible');
-  Gtk2::Ex::WidgetCursor->busy;
-
-  $toplevel->destroy;
-  ok (1);
+my $widget = MyOverloadWidget->new;
+if (eval { my $x = $widget+0; 1 }) {
+  plan skip_all => 'somehow overloaded widget+0 no error, maybe perl 5.8.3 badness';
 }
+
+plan tests => 2;
+
+isa_ok ($widget, 'MyOverloadWidget');
+
+my $toplevel = Gtk2::Window->new;
+$toplevel->add ($widget);
+$toplevel->show_all;
+MyTestHelpers::main_iterations();
+
+my $wobj = Gtk2::Ex::WidgetCursor->new (widgets => [$toplevel,$widget],
+                                        active => 1,
+                                        include_children => 1,
+                                        cursor => 'invisible');
+Gtk2::Ex::WidgetCursor->busy;
+
+$toplevel->destroy;
+ok (1);
 
 exit 0;

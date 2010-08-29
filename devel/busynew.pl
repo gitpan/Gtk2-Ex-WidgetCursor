@@ -1,6 +1,6 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
-# Copyright 2008, 2009 Kevin Ryde
+# Copyright 2008, 2009, 2010 Kevin Ryde
 
 # This file is part of Gtk2-Ex-WidgetCursor.
 #
@@ -65,12 +65,14 @@ $toplevel->add ($vbox);
                              my $toplevel = Gtk2::Window->new ('toplevel');
                              $toplevel->set_size_request (100, 100);
 
-                             print "$progname: show\n";
+                             print "$progname: show $toplevel\n";
                              $toplevel->show_all;
+                             print "$progname: sleep\n";
                              sleep (2);
 
                              print "$progname: flush\n";
                              $toplevel->get_display->flush;
+                             print "$progname: sleep\n";
                              sleep (2);
                            });
   $vbox->pack_start ($button, 1,1,0);
@@ -83,8 +85,11 @@ $toplevel->add ($vbox);
                              Gtk2::Ex::WidgetCursor->busy;
                              my $toplevel = Gtk2::Window->new ('toplevel');
                              $toplevel->set_size_request (100, 100);
+
+                             print "$progname: show $toplevel\n";
                              $toplevel->show_all;
 
+                             print "$progname: re-busy\n";
                              Gtk2::Ex::WidgetCursor->busy;
                              print "$progname: sleep now\n";
                              sleep (4);

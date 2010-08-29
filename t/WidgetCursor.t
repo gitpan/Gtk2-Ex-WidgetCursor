@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 # Copyright 2007, 2008, 2009, 2010 Kevin Ryde
 
@@ -20,21 +20,18 @@
 use strict;
 use warnings;
 use Gtk2::Ex::WidgetCursor;
-use Test::More tests => 29;
+use Test::More tests => 28;
 
 use lib 't';
 use MyTestHelpers;
+BEGIN { MyTestHelpers::nowarnings() }
 
-BEGIN {
- SKIP: { eval 'use Test::NoWarnings; 1'
-           or skip 'Test::NoWarnings not available', 1; }
-}
 
 #-----------------------------------------------------------------------------
 # VERSION
 
 {
-  my $want_version = 10;
+  my $want_version = 11;
   is ($Gtk2::Ex::WidgetCursor::VERSION, $want_version, 'VERSION variable');
   is (Gtk2::Ex::WidgetCursor->VERSION,  $want_version, 'VERSION class method');
   ok (eval { Gtk2::Ex::WidgetCursor->VERSION($want_version); 1 },

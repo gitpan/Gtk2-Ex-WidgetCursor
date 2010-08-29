@@ -15,53 +15,54 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 842745cb706f8f2126506f544492f7a80dbe29b3 COPYING
-SHA1 56df724fb9915034fda51d3e471c9f6163040425 Changes
-SHA1 230c22be4c3ad644a984fd7b234d0c1d034a01cb MANIFEST
-SHA1 2e9c13dc6e456ea6b5c3be76b743a63a0442e035 MANIFEST.SKIP
-SHA1 e658bb236ee93c7144e57b98cffaed9e36c78311 META.yml
-SHA1 9cf4fa321098e5af26993d390883446399dd299d Makefile.PL
+SHA1 44223598ff1a754716467e68a2fe230e354067ff Changes
+SHA1 472bfaa2bd8f4a98aca08f0af7b7c2115419dca5 MANIFEST
+SHA1 9f057ed3ba7d042426c4d899f7685b4ae05076b2 MANIFEST.SKIP
+SHA1 3248f1d8cd184183d573270b531abcbea41de303 META.yml
+SHA1 ccc6eb0ea5506f3b5834ecdedb2c3f1b09b9d193 Makefile.PL
 SHA1 84e25dff4527571761f7e35a3be4b5a1ed66ce25 README
-SHA1 9f3acd3c79b1e9b5135ab51d5a04c2c819dcdd41 debian/changelog
+SHA1 2cbc0b7b295e68a3eb8c4673c3f2459a6d7b5fe1 debian/changelog
 SHA1 ac3478d69a3c81fa62e60f5c3696165a4e5e6ac4 debian/compat
-SHA1 498fbb6d30c6d76afe9811f3992db6e07471e72a debian/control
+SHA1 60d247aa3f13d0adf19781ba2433b79866f414cc debian/control
 SHA1 c360820d928a2b5b54d4a3193f2b21398c8c9ad2 debian/copyright
 SHA1 255cee92f88ff634afa060f2023514d2fe37f0dd debian/patches/pod-examples-dir.diff
 SHA1 5e2f095f6bbeb235a2e7597c1c68001e93262bbf debian/rules
 SHA1 61652cd1568dcf2614df833eba241755eee34e89 debian/source/format
 SHA1 105891528b4dbf8b51b278453d97ad5bc0e5a339 debian/watch
 SHA1 9fbbb68d2180ff9f63d17941deb138d54543d940 devel/GNUmakefile
-SHA1 eee2bd1c0b787a42a236ef9c50533747093aa6d2 devel/TestWithoutGtk2Things.pm
-SHA1 1da7bdfcada0a79c8579e193f2b298a901a48c9e devel/busydestroy.pl
-SHA1 73d17477fcc5739dfb61705de6f84b41ecebdc27 devel/busynew.pl
-SHA1 a77ab489cc43fcbe955b3493881610e3b7148c2b devel/combo.pl
-SHA1 dfbc975f45cb386065448eee5027f90a7dd53a09 devel/entry.pl
+SHA1 c1667c0ca830cbe3829712234b00370ab91fcb3f devel/busydestroy.pl
+SHA1 5641bb69ac1cc0e536ea006141f333c9679a665b devel/busynew.pl
+SHA1 9190c0932c33c185c9a49b7cca6a392c5fa6e61a devel/combo.pl
+SHA1 fe6ecc2096cf1e9e35803049902db8b670158853 devel/entry.pl
 SHA1 6dccb1c0367a546a545a4b29f87a6a84b4227df7 devel/invisible-blank.c
-SHA1 4b2bb179c1382c47555f3d56fedad3f5dbf7ad17 devel/invisible.pl
-SHA1 44eb1337cacf8349b3f10c3ecd883190f1415946 devel/linkbutton.pl
-SHA1 d9ed050a14c64a535d2e3dd8d67958710c040cf4 devel/no-window.pl
-SHA1 2a02a5fe35fbaeed5e552031a53b435c3e6decd6 devel/run.pl
-SHA1 c8dff5738d475a292b4725ca0c2d6d8c5db97d68 devel/spinner.pl
-SHA1 0aeb7dc55e2aa6c5c3527bad3af321291513335d devel/unbusy-idle.pl
-SHA1 cbb0cd9a11d7efc399edc09cd823a6707b79360c examples/cursortype.pl
-SHA1 81aafd9200fc790cb48d0525dbdab7af2e4dc9a1 examples/heart.pl
-SHA1 22f3dd7792653045d62332113c5b7eed1253d63b examples/misc.pl
-SHA1 98512ebb694985257201d19840b71c65e6cb18af examples/priority.pl
-SHA1 06aec3e55a7d00d08e5218a9e0cbcb34ff106b00 examples/timebusy.pl
-SHA1 5558edc5e44856cc82bb7648d031bfd6c64a346d inc/MyMakeMakerExtras.pm
-SHA1 63427b66eb26f013f10c835b0cf320c93361f310 inc/my_pod2html
-SHA1 1070e6dbb8181ed0b777a005882f030092914143 lib/Gtk2/Ex/WidgetCursor.pm
-SHA1 d5d5c83c83918d8c97ca79e92ea840cdf277f01f t/0-META-read.t
+SHA1 0337b21bc49f8f47d68c22a7202b7c979f308c9d devel/invisible.pl
+SHA1 1a8f32609d6647081c4a01ca28d7e17ae2a2f60a devel/linkbutton.pl
+SHA1 cd2b41f5e4b9315ba77b33d3788a34781d18cfdc devel/no-window.pl
+SHA1 9f4e5dca5b61cf4c97ae331ccaee4ef7de075398 devel/overload.pl
+SHA1 df8c2b1660884de0a77f7a6088d0863e9e133bc0 devel/run.pl
+SHA1 caab68a3f54741b209b3594818c4db0ed9bcf73d devel/set-cursor.pl
+SHA1 53af42c6c07f610299277eec3e76f73e9ee5db1f devel/spinner.pl
+SHA1 0d19d764445487b2055da5cb18d18e788ef93cb5 devel/unbusy-idle.pl
+SHA1 cc71949a659bea3ee080f8440391c4ad51a26cf5 examples/cursortype.pl
+SHA1 f6de482314c7d642ea389bc6c717b74baf136a24 examples/heart.pl
+SHA1 90857da0b9d75833fca35e8a314b16ae13c18312 examples/misc.pl
+SHA1 3f70b009482f14ddc8d2d34f3bc3386814cc051b examples/priority.pl
+SHA1 7aaa6257c7046fde9f4c27746687807e6ae8f860 examples/timebusy.pl
+SHA1 91f40a4f9faab492cacef63fc315d3eb9de22584 inc/MyMakeMakerExtras.pm
+SHA1 692a1ddc2ca6b98cac7b48ea40bc1ac1509e8ed9 inc/my_pod2html
+SHA1 b03049a8caa780351393894e105cac9463788a51 lib/Gtk2/Ex/WidgetCursor.pm
+SHA1 9127f78a0dfa04976acbb979dd7862ef59a74c58 t/0-META-read.t
 SHA1 37abd43b41068804ea4bb099fdd89af21be82926 t/0-Test-DistManifest.t
 SHA1 8f93fb4c8f0424a4442cc93c9a2e86342ef55281 t/0-Test-Pod.t
 SHA1 fb517c2fae5ddac559318bf6a224949115ea3129 t/0-Test-YAML-Meta.t
-SHA1 e5b9059d5e27d380fc9418095d773ad5f96baa06 t/MyTestHelpers.pm
-SHA1 9abe1a27b5a3bc979a0c0da06e8d34135d6a6222 t/WidgetCursor.t
-SHA1 e351e7c1798646a44b0179d7f50e08395bf7308b t/busy-first.t
-SHA1 b13fc43e11443274228fccf045a99a35abc45d89 t/overload.t
+SHA1 cc9d34bca6c40211dd6aa8fee844bb1a7f908461 t/MyTestHelpers.pm
+SHA1 eb59072efa258256f24f9b2e32e7e940549d6aa7 t/WidgetCursor.t
+SHA1 b4649a0e16679004f696df3423745b5821a9019a t/busy-first.t
+SHA1 bbe3c1abe6f224489aab7f9150e1d8af3cb442b8 t/overload.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (GNU/Linux)
 
-iD8DBQFMBM4ELFMCIV9q3ToRAsp4AJ0dniDSgNj0GNpsO2LGPao+sU9NNQCfSyVq
-bm7xiQTTAHUal3GOvbBkf/E=
-=jUIT
+iD8DBQFMeb7yLFMCIV9q3ToRAj7kAKCD+jxyU7WP2jS+VeWBavu4OI1qaQCePR+q
+tyIXcVjHWZid2pHJbItZNas=
+=MeRo
 -----END PGP SIGNATURE-----

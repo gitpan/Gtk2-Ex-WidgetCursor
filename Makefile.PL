@@ -45,12 +45,12 @@ MyMakeMakerExtras::WriteMakefile
    META_MERGE
    => { resources
         => { homepage => 'http://user42.tuxfamily.org/gtk2-ex-widgetcursor/index.html' },
-        optional_features
-        => { maximum_tests
-             => { description => 'Have "make test" do as much as possible.',
-                  requires => { 'Test::NoWarnings' => 0,
-                              },
-                },
-           },
+#         optional_features
+#         => { maximum_tests
+#              => { description => 'Have "make test" do as much as possible.',
+#                   requires => { 
+#                               },
+#                 },
+#            },
       },
   );
