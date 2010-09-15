@@ -27,7 +27,7 @@ use Scalar::Util 1.18; # 1.18 for pure-perl refaddr() fix
 # uncomment this to run the ### lines
 #use Smart::Comments;
 
-our $VERSION = 11;
+our $VERSION = 12;
 
 
 #------------------------------------------------------------------------------
@@ -751,6 +751,8 @@ __END__
 =head1 NAME
 
 Gtk2::Ex::WidgetCursor -- mouse pointer cursor management for widgets
+
+=for test_synopsis my ($mywidget)
 
 =head1 SYNOPSIS
 

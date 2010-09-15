@@ -1,5 +1,5 @@
-libgtk2-ex-widgetcursor-perl (11-1) unstable; urgency=low
+libgtk2-ex-widgetcursor-perl (12-1) unstable; urgency=low
 
   * Packaged version.
 
- -- Kevin Ryde <user42@zip.com.au>  Sun, 29 Aug 2010 11:57:59 +1000
+ -- Kevin Ryde <user42@zip.com.au>  Thu, 16 Sep 2010 08:17:30 +1000
