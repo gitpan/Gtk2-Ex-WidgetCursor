@@ -27,7 +27,12 @@ use Scalar::Util 1.18; # 1.18 for pure-perl refaddr() fix
 # uncomment this to run the ### lines
 #use Smart::Comments;
 
-our $VERSION = 12;
+our $VERSION = 13;
+
+# Gtk 2.2 for get_display()
+# could work without it, but probably not worth bothering
+Gtk2->CHECK_VERSION(2,2,0)
+  or die "WidgetCursor requires Gtk 2.2 or higher";
 
 
 #------------------------------------------------------------------------------
@@ -630,11 +635,11 @@ sub _do_busy_realize_emission {
   my ($invocation_hint, $param_list) = @_;
   my ($widget) = @$param_list;
   ### WidgetCursor _do_busy_realize_emission(): "$widget"
-#   if ($widget->isa ('Gtk2::Window')) {
-#     $busy_wc->add_widgets (Gtk2::Window->list_toplevels);
-#     ### _do_busy_realize_emission() flush
-#     $widget->get_display->flush;
-#   }
+  if ($widget->isa ('Gtk2::Window')) {
+    $busy_wc->add_widgets (Gtk2::Window->list_toplevels);
+    ### _do_busy_realize_emission() flush
+    $widget->get_display->flush;
+  }
   return 1; # stay connected
 }
 

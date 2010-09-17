@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License along
 with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
+Version 13, September 2010
+    - fix some realize-during-busy commented out for debugging
+
 Version 12, September 2010
     - test manifest only as an author test
 

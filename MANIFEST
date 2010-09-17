@@ -8,6 +8,7 @@ debian/patches/pod-examples-dir.diff
 debian/rules
 debian/source/format
 debian/watch
+devel/busy-two.pl
 devel/busydestroy.pl
 devel/busynew.pl
 devel/combo.pl

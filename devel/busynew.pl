@@ -58,6 +58,17 @@ my $vbox = Gtk2::VBox->new;
 $toplevel->add ($vbox);
 
 {
+  my $button = Gtk2::Button->new_with_label ("Another Toplevel");
+  $button->signal_connect (clicked => sub {
+                             print "$progname: another toplevel\n";
+                             my $toplevel = Gtk2::Window->new ('toplevel');
+                             $toplevel->set_size_request (75, 75);
+                             $toplevel->show_all;
+                           });
+  $vbox->pack_start ($button, 1,1,0);
+}
+
+{
   my $button = Gtk2::Button->new_with_label ("Busy and Open");
   $button->signal_connect (clicked => sub {
                              print "$progname: busy\n";
