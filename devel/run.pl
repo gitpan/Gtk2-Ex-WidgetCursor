@@ -87,7 +87,8 @@ my $progname = $FindBin::Script;
     $vbox2->pack_start ($entry, 1, 1, 0);
   }
 
-  my $base = Gtk2::Ex::WidgetCursor->new (widget => $area);
+  my $base = Gtk2::Ex::WidgetCursor->new (widget => $toplevel,
+                                         include_children => 1);
   print "$progname: base $base\n";
   {
     my $button = Gtk2::Button->new_with_label ("Boat");
@@ -291,3 +292,6 @@ foreach my $widget (Gtk2::Window->list_toplevels) {
 
 Gtk2->main;
 exit 0;
+
+
+__END__

@@ -27,7 +27,12 @@
 # when actually starting (the start() function here).  And of course the
 # cursor could be just on an affected widget (or widgets) not the whole
 # toplevel.
-
+#
+# If your job holds working state for the calculation in a hash or object or
+# similar then that can be a good place to hold the WidgetCursor too.  When
+# the job is either completed or aborted you discard the working data and
+# the WidgetCursor is destroyed automatically (unsetting the cursor).
+#
 
 use strict;
 use warnings;

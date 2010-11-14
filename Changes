@@ -16,6 +16,10 @@ You should have received a copy of the GNU General Public License along
 with Gtk2-Ex-WidgetCursor.  If not, see <http://www.gnu.org/licenses/>.
 
 
+Version 14, November 2010
+    - an actual Glib::Object so can make from Gtk2::Builder
+    - cleanup realize handler on destroy (harmless but unsightly)
+
 Version 13, September 2010
     - fix some realize-during-busy commented out for debugging
 

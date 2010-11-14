@@ -23,6 +23,8 @@ devel/run.pl
 devel/set-cursor.pl
 devel/spinner.pl
 devel/unbusy-idle.pl
+examples/builder-add.pl
+examples/builder.pl
 examples/cursortype.pl
 examples/heart.pl
 examples/misc.pl
@@ -39,6 +41,7 @@ SIGNATURE
 t/busy-first.t
 t/MyTestHelpers.pm
 t/overload.t
+t/test-weaken.t
 t/WidgetCursor.t
 xt/0-META-read.t
 xt/0-Test-DistManifest.t

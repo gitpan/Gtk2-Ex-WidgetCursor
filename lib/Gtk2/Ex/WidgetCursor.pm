@@ -22,12 +22,13 @@ use warnings;
 use Carp;
 use Gtk2;
 use List::Util;
+use POSIX ();
 use Scalar::Util 1.18; # 1.18 for pure-perl refaddr() fix
 
 # uncomment this to run the ### lines
 #use Smart::Comments;
 
-our $VERSION = 13;
+our $VERSION = 14;
 
 # Gtk 2.2 for get_display()
 # could work without it, but probably not worth bothering
@@ -130,6 +131,86 @@ Gtk2->CHECK_VERSION(2,2,0)
 
 #------------------------------------------------------------------------------
 
+use Glib::Object::Subclass
+  'Glib::Object',
+  properties => [ Glib::ParamSpec->object
+                  ('widget',
+                   'widget',
+                   'The widget to show the cursor in, if just one widget.',
+                   'Gtk2::Widget',
+                   Glib::G_PARAM_READWRITE),
+
+                  Glib::ParamSpec->scalar
+                  ('widgets',
+                   'widgets',
+                   'An arrayref of widgets to show the cursor in.',
+                   Glib::G_PARAM_READWRITE),
+
+                  Glib::ParamSpec->object
+                  ('add-widget',
+                   'add-widget',
+                   'Pseudo-property to add a widget to the cursor in.',
+                   'Gtk2::Widget',
+                   ['writable']),
+
+                  Glib::ParamSpec->scalar
+                  ('cursor',
+                   'cursor',
+                   'Cursor to use while dragging, as any name or object accepted by Gtk2::Ex::WidgetCursor.',
+                   Glib::G_PARAM_READWRITE),
+                  #
+                  # when glib 1.240 has fix for this pspec/get/set style
+                  # {
+                  #  pspec => ...,
+                  #  get => \&cursor,
+                  #  set => \&cursor,
+                  # }
+
+                  Glib::ParamSpec->string
+                  ('cursor-name',
+                   'cursor-name',
+                   'Cursor to use while dragging, as cursor type enum nick plus "invisible".',
+                   '',  # FIXME: default is undef when gtk2-perl allows that
+                   Glib::G_PARAM_READWRITE),
+
+                  Glib::ParamSpec->boxed
+                  ('cursor-object',
+                   'cursor-object',
+                   'Cursor to use while dragging, as cursor object.',
+                   'Gtk2::Gdk::Cursor',
+                   Glib::G_PARAM_READWRITE),
+
+                  Glib::ParamSpec->boolean
+                  ('active',
+                   'active',
+                   'Whether to show this cursor.',
+                   0, # default no
+                   Glib::G_PARAM_READWRITE),
+                  # when glib 1.240 has fix for this pspec/get/set style
+                  # {
+                  #  pspec => '',
+                  #  get => \&active,
+                  #  set => \&active,
+                  # }
+
+                  Glib::ParamSpec->double
+                  ('priority',
+                   'priority',
+                   'The priority of this cursor among multiple WidgetCursors on a given widget.  Higher numbers are higher priority.',
+                   - POSIX::DBL_MAX(), # min
+                   POSIX::DBL_MAX(),   # max
+                   0,                  # default
+                   Glib::G_PARAM_READWRITE),
+
+                  Glib::ParamSpec->boolean
+                  ('include-children',
+                   'include-children',
+                   'Whether to apply the cursor to child widgets too.',
+                   0, # default no
+                   Glib::G_PARAM_READWRITE),
+
+                ];
+
 # @wobjs is all the WidgetCursor objects which currently exist, sorted from
 # highest to lowest priority, and from newest to oldest among those of equal
 # priority
@@ -140,50 +221,106 @@ Gtk2->CHECK_VERSION(2,2,0)
 #
 my @wobjs = ();
 
-sub new {
-  my ($class, %self) = @_;
-  my $self = bless \%self, $class;
-
-  # widget=> and/or widgets=> params merged, copied and weakened
-  my @array;
-  if (my $widget = delete $self->{'widget'}) { push @array, $widget; }
-  if (my $aref = $self->{'widgets'}) { push @array, @$aref; }
-  foreach (@array) { Scalar::Util::weaken ($_); }
-  $self->{'widgets'} = \@array;
-  $self->{'installed_widgets'} = [];
-
-  # insertion in @wobjs according to priority
-  my $pos;
-  for ($pos = 0; $pos < @wobjs; $pos++) {
-    if (($self->{'priority'}||0) >= ($wobjs[$pos]->{'priority'}||0)) {
-      last;
-    }
-  }
-  splice @wobjs,$pos,0, $self;
-  Scalar::Util::weaken ($wobjs[$pos]);
-
-  if ($self->{'active'}) {
-    _wobj_activated ($self);
-  }
-  return $self;
-}
-
-sub DESTROY {
+sub INIT_INSTANCE {
   my ($self) = @_;
-  ### DESTROY: "$self"
+  $self->{'installed_widgets'} = [];
+  _wobjs_insert ($self);
+}
+sub FINALIZE_INSTANCE {
+  my ($self) = @_;
+  ### FINALIZE_INSTANCE: "$self"
   _splice_out (\@wobjs, $self);
-  if ($self->{'active'}) {
+  if (delete $self->{'active'}) {
     _wobj_deactivated ($self);
   }
 }
 
-sub _splice_out {
-  my ($aref, $target) = @_;
-  for (my $i = 0; $i < @$aref; $i++) {
-    if (! defined $aref->[$i] || $aref->[$i] == $target) {
-      splice @$aref, $i,1;
+sub GET_PROPERTY {
+  my ($self, $pspec) = @_;
+  ### WidgetCursor GET_PROPERTY(): $pspec->get_name
+  my $pname = $pspec->get_name;
+
+  if ($pname eq 'cursor_name') {
+    my $cursor = $self->{'cursor'};
+    if (Scalar::Util::blessed($cursor)) {
+      $cursor = $cursor->type;
+    }
+    return $cursor;
+  }
+  if ($pname eq 'cursor_object') {
+    my $cursor = $self->{'cursor'};
+    return (Scalar::Util::blessed($cursor)
+            && $cursor->isa('Gtk2::Gdk::Cursor')
+            && $cursor);
+  }
+
+  return $self->{$pname};
+}
+
+sub SET_PROPERTY {
+  my ($self, $pspec, $newval) = @_;
+  ### WidgetCursor SET_PROPERTY(): $pspec->get_name
+  my $pname = $pspec->get_name;
+
+  if ($pname eq 'active') {
+    $self->active($newval);
+    return;
+  }
+  if ($pname =~ /^cursor/) {
+    $self->cursor($newval);
+    return;
+  }
+  if ($pname eq 'add_widget') {
+    $self->add_widgets ($newval);
+    return;
+  }
+
+  if ($pname eq 'widget') {
+    $pname = 'widgets';
+    $newval = [ $newval ];
+  }
+  if ($pname eq 'widgets') {
+    my @array;
+    push @array, @$newval;
+    foreach (@array) { Scalar::Util::weaken ($_); }
+    $self->{'widgets'} = \@array;
+    if ($self->{'active'}) {
+      _wobj_activated ($self);
+    }
+    return;
+  }
+
+  $self->{$pname} = $newval;
+
+  if ($pname eq 'priority') {
+    _wobjs_insert ($self);
+    if ($self->{'active'}) {
+      _wobj_activated ($self);
     }
   }
+}
+
+# insert $self into @wobjs according to $self->{'priority'}
+sub _wobjs_insert {
+  my ($self) = @_;
+
+  my $priority = ($self->{'priority'}||0);
+  my $pos = 0;
+  while ($pos < @wobjs) {
+    # FINALIZE_INSTANCE removes on destroy, but beware of undef just in case
+    if (my $wobj = $wobjs[$pos]) {
+      if ($wobj == $self) {
+        splice @wobjs,$pos,1;  # remove from old position
+        next;
+      }
+      if ($priority >= ($wobj->{'priority'}||0)) {
+        last;
+      }
+    }
+    $pos++;
+  }
+  splice @wobjs,$pos,0, $self;
+  Scalar::Util::weaken ($wobjs[$pos]);
 }
 
 # get or set "active"
@@ -197,15 +334,19 @@ sub active {
   $self->{'active'} = $newval;
   if ($oldval && ! $newval) {
     _wobj_deactivated ($self);
+    $self->notify('active');
   } elsif ($newval && ! $oldval) {
     _wobj_activated ($self);
+    $self->notify('active');
   }
 }
 
 # newly turned off or destroyed
 sub _wobj_deactivated {
   my ($self) = @_;
+  ### _wobj_deactivated()
   my $aref = $self->{'installed_widgets'};
+  ### $aref
   $self->{'installed_widgets'} = [];
   foreach my $widget (@$aref) {
     _update_widget ($widget);
@@ -215,7 +356,7 @@ sub _wobj_deactivated {
 # newly turned on or created on
 sub _wobj_activated {
   my ($self) = @_;
-  ### _wobj_activated
+  ### _wobj_activated()
 
   if ($self->{'include_children'}) {
     # go through widgets in other wobjs as well as ourselves since they may
@@ -280,6 +421,9 @@ sub _update_widget {
   if (! $wobj) {
     # no wobj applies to this widget any more
     delete $widget->{__PACKAGE__.'.installed'};
+    if (my $handler_id = delete $widget->{__PACKAGE__.'.realize_id'}) {
+      $widget->signal_handler_disconnect ($handler_id);
+    }
 
     my ($hack_win, $hack_cursor) = $widget->Gtk2_Ex_WidgetCursor_hack_restore;
     $hack_win ||= 0; # avoid undef
@@ -297,15 +441,8 @@ sub _update_widget {
 
   # install wobj on this widget
 
-  my @windows = $widget->Gtk2_Ex_WidgetCursor_windows;
-  if (! defined $windows[0]) {
-    ### not realized, defer setting
-    $widget->{__PACKAGE__.'.realize_id'} ||=
-      $widget->signal_connect (realize => \&_do_widget_realize);
-    return;
-  }
-
   # remember this widget under wobj
+  # this is when unrealized too, so remember to cleanup realize handler
   { my $aref = $wobj->{'installed_widgets'};
     push @$aref, $widget;
     Scalar::Util::weaken ($aref->[-1]);
@@ -316,6 +453,14 @@ sub _update_widget {
   $widget->{__PACKAGE__.'.installed'} = $wobj;
   Scalar::Util::weaken ($widget->{__PACKAGE__.'.installed'});
 
+  my @windows = $widget->Gtk2_Ex_WidgetCursor_windows;
+  if (! defined $windows[0]) {
+    ### not realized, defer setting
+    $widget->{__PACKAGE__.'.realize_id'} ||=
+      $widget->signal_connect (realize => \&_do_widget_realize);
+    return;
+  }
+
   # and finally actually set the cursor
   my $cursor = _resolve_cursor ($wobj, $widget);
   foreach my $win (@windows) {
@@ -325,7 +470,7 @@ sub _update_widget {
   }
 }
 
-# 'realized' handler on a WidgetCursor affected widget
+# 'realize' signal handler on a WidgetCursor affected widget
 sub _do_widget_realize {
   my ($widget) = @_;
   ### now realized
@@ -351,18 +496,24 @@ sub _wobj_applies_to_widget {
 # get or set "cursor"
 sub cursor {
   my ($self, $newval) = @_;
-  if (@_ < 2) { return $self->{'cursor'}; }
+  if (@_ < 2) { return $self->{'cursor'}; }  # get
 
-  my $oldval = $self->{'cursor'};
+  # set
+  if (_cursor_equal ($self->{'cursor'}, $newval)) { return; }
   $self->{'cursor'} = $newval;
-  if (! $self->{'active'} || _cursor_equal ($oldval, $newval)) { return; }
 
-  foreach my $widget (@{$self->{'installed_widgets'}}) {
-    foreach my $win ($widget->Gtk2_Ex_WidgetCursor_windows) {
-      $win || next;  # only if realized
-      $win->set_cursor (_resolve_cursor ($self, $widget));
+  if ($self->{'active'}) {
+    foreach my $widget (@{$self->{'installed_widgets'}}) {
+      foreach my $win ($widget->Gtk2_Ex_WidgetCursor_windows) {
+        $win || next;  # only if realized
+        $win->set_cursor (_resolve_cursor ($self, $widget));
+      }
     }
   }
+
+  $self->notify('cursor');
+  $self->notify('cursor-name');
+  $self->notify('cursor-object');
 }
 
 # return true if two cursor settings $x and $y are the same
@@ -379,7 +530,6 @@ sub widgets {
   return grep {defined} @{$self->{'widgets'}};
 }
 
-# add widgets to wobj
 sub add_widgets {
   my ($self, @widgets) = @_;
   my $aref = $self->{'widgets'};
@@ -407,6 +557,8 @@ sub add_widgets {
       _update_widget ($widget);
     }
   }
+  $self->notify('widget');
+  $self->notify('widgets');
 }
 
 # return an actual Gtk2::Gdk::Cursor from what may be only a string setting
@@ -426,8 +578,14 @@ sub _resolve_cursor {
   } else {
     # string cursor name -- only ever call to resolve here when widget is
     # realized, so get_display() isn't undef
-    my $display = $widget->get_display;
-    return Gtk2::Gdk::Cursor->new_for_display ($display, $cursor);
+    if ($widget->can('get_display')) {
+      # gtk 2.2 up
+      my $display = $widget->get_display;
+      return Gtk2::Gdk::Cursor->new_for_display ($display, $cursor);
+    } else {
+      # gtk 2.0.x
+      return Gtk2::Gdk::Cursor->new ($cursor);
+    }
   }
 }
 
@@ -750,6 +908,18 @@ sub invisible_cursor {
 
 
 #------------------------------------------------------------------------------
+# generic helpers
+
+sub _splice_out {
+  my ($aref, $target) = @_;
+  for (my $i = 0; $i < @$aref; $i++) {
+    if (! defined $aref->[$i] || $aref->[$i] == $target) {
+      splice @$aref, $i,1;
+    }
+  }
+}
+
+#------------------------------------------------------------------------------
 1;
 __END__
 
@@ -772,22 +942,28 @@ Gtk2::Ex::WidgetCursor -- mouse pointer cursor management for widgets
  # bonus invisible cursor creator
  my $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor;
 
+=head1 OBJECT HIERARCHY
+
+C<Gtk2::Ex::WidgetCursor> is a subclass of C<Glib::Object>.
+
+    Glib::Object
+      Gtk2::Ex::WidgetCursor
+
 =head1 DESCRIPTION
 
-WidgetCursor manages the mouse pointer cursor shown in widget windows as set
-by C<Gtk2::Gdk::Window::set_cursor>.  A "busy" mechanism can display a
+WidgetCursor manages the mouse pointer cursor shown in widget windows as per
+C<Gtk2::Gdk::Window> C<set_cursor>.  A "busy" mechanism can display a
 wristwatch in all windows when the whole application is blocked.
 
-The plain C<set_cursor> lacks even a corresponding C<get_cursor> until Gtk
-2.18, making it difficult for widget add-ons or independent parts of an
-application to cooperate with what cursor should be shown at different times
-or in different modes.
+With the plain window C<set_cursor> it's difficult for widget add-ons or
+independent parts of an application to cooperate with what should be shown
+at different times or in different modes.
 
-To help that a C<Gtk2::Ex::WidgetCursor> object represents a desired cursor
-in one or more widgets.  When "active" and when the newest or highest
-priority then the specified cursor is set onto those widget window(s).  If
-the WidgetCursor object is later made inactive or destroyed then the next
-highest WidgetCursor takes effect, etc.
+A C<Gtk2::Ex::WidgetCursor> object represents a desired cursor in one or
+more widgets.  When "active" and when it's the newest or highest priority
+then the specified cursor is set onto those widget window(s).  If the
+WidgetCursor object is later made inactive or destroyed then the next
+remaining highest WidgetCursor takes effect, etc.
 
 The idea is to have say a base WidgetCursor for an overall mode, then
 something else temporarily while dragging, and perhaps a wristwatch "busy"
@@ -800,77 +976,44 @@ contrived sample programs.
 
 =head1 WIDGETCURSOR OBJECTS
 
-=over 4
+=head2 Construction
+
+=over
 
 =item C<< $wc = Gtk2::Ex::WidgetCursor->new (key => value, ...) >>
 
-Create and return a new C<WidgetCursor> object.  Parameters are taken in
-key/value style,
-
-    widget             single widget
-    widgets            array reference for multiple widgets
-    cursor             string or object
-    active             boolean
-    priority           default 0
-    include_children   boolean
-
-For example,
+Create and return a new C<WidgetCursor> object.  Optional key/value
+parameters set initial properties as per C<< Glib::Object->new >> (see
+L<Glib::Object>).
 
     $wc = Gtk2::Ex::WidgetCursor->new (widget => $mywidget,
                                        cursor => 'fleur',
                                        active => 1);
 
-C<cursor> can be any of
+Note that C<active> is false by default and the WidgetCursor does nothing to
+the widgets until made C<active> by the property or the method call below.
 
-=over 4
-
-=item *
-
-A string name of a cursor from the C<Gtk2::Gdk::CursorType> enum, such as
-C<"hand1"> (see L<Gtk2::Gdk::Cursor> for the full list).
-
-=item *
-
-The special string name C<"invisible"> to have no cursor at all.  (You can
-also use C<"blank-cursor"> in Gtk 2.16 and up.)
-
-=item *
-
-A C<Gtk2::Gdk::Cursor> object.  If your program uses multiple displays then
-remember the cursor object must be on the same display as the widget(s).
-
-=item *
-
-C<undef> to inherit the parent window's cursor, which often means the
-default little pointing arrow of the root window.
+WidgetCursor objects can be applied to unrealized widgets.  The cursor
+settings take effect if/when the widgets are realized.
 
 =back
 
-C<active> can be set to make the new cursor take effect immediately,
-otherwise the C<active()> function below turns it on when desired.
+=head2 Methods
 
-C<include_children> means all the children of the given widgets are affected
-too.  Normally the cursor in a child widget overrides its parents (as
-C<set_cursor> does at the window level).  But with C<include_children> a
-setting in a parent applies to the children too, with priority+newest
-applied as usual.
-
-Optional C<priority> is a number.  The default is level 0 and higher values
-are higher priority.  A low value (perhaps negative) can act as a fallback,
-or a high value can trump other added cursors.
+=over
 
 =item C<< $bool = $wc->active () >>
 
 =item C<< $wc->active ($newval) >>
 
-Get or set the "active" state of C<$wc>.
+Get or set the "active" state of C<$wc>.  This is the C<active> property.
 
 =item C<< $cursor = $wc->cursor () >>
 
 =item C<< $wc->cursor ($cursor) >>
 
-Get or set the cursor of C<$wc>.  Any cursor setting in the style of C<new>
-above can be given.  Eg.
+Get or set the cursor of C<$wc>.  This is the C<cursor> property, see
+L</PROPERTIES> below for possible values.  Eg.
 
     $wc->cursor ('umbrella');
 
@@ -886,13 +1029,20 @@ or if you know you're only acting on one widget then say
 
 =item C<< $wc->add_widgets ($widget, $widget, ...) >>
 
-Add widgets to C<$wc>.  Any widgets given which are in fact already in
-C<$wc> are ignored.
+Add widgets to C<$wc>.  Any widgets given which are already in C<$wc> are
+ignored.
 
 =back
 
-WidgetCursor objects can operate on unrealized widgets.  The cursor settings
-take effect if/when the widgets are realized.
+=head1 PROPERTIES
+
+=over 4
+
+=item C<widget> (C<Gtk2::Widget>, default C<undef>)
+
+=item C<widgets> (scalar arrayref of C<Gtk2::Widget>, default C<undef>)
+
+The widget or widgets to act on.
 
 A WidgetCursor object only keeps weak references to its widget(s), so the
 mere fact there's a desired cursor won't keep a widget alive forever.
@@ -907,11 +1057,92 @@ creating a circular reference.  Eg.
                                   active => 1,
                                   priority => -10);
 
+=item C<add-widget> (C<Gtk2::Widget>, write-only)
+
+Add a widget to those to act on.  This is a write-only pseudo-property
+calling C<add_widget> above.  It's good for C<Gtk2::Builder> where the
+C<widgets> property can't be used since it's a Perl scalar type.
+
+=item C<cursor> (scalar string name or C<Gtk2::Gdk::Cursor> object)
+
+The cursor to show in the widgets.  This can be
+
+=over
+
+=item *
+
+A string cursor type nick from the C<Gtk2::Gdk::CursorType> enum, such as
+C<"hand1">.  See L<Gtk2::Gdk::Cursor> for the full list of cursor types.
+
+=item *
+
+Special string name C<"invisible"> to have no cursor at all.  In Gtk 2.16 up
+this is the same as "blank-cursor", or in earlier versions gives a "no
+pixels set" pixmap cursor.
+
+=item *
+
+A C<Gtk2::Gdk::Cursor> object.
+
+If your program uses multiple displays then remember the cursor object must
+be on the same display (ie. C<Gtk2::Gdk::Display>) as the widget(s).  If you
+have more than one widget then they must be all on the same display in this
+case.  (For a named cursor they don't have to be.)
+
+=item *
+
+C<undef> to inherit the parent window's cursor, which may be the default
+little pointing arrow or whatever from the root window.
+
+=back
+
+=item C<cursor-name> (string, default C<undef>)
+
+=item C<cursor-object> (C<Gtk2::Gdk::Cursor>, default C<undef>)
+
+The cursor to show in the widgets, as a plain Glib string or object
+property.  These are designed for use from C<Gtk2::Builder> where the scalar
+type C<cursor> property can't be set.
+
+Reading from C<cursor-name> when a cursor object has been set gives the type
+nick if it has one, or if it's a pixmap then currently C<undef>.
+
+Reading from C<cursor-object> when a cursor name string has been set gives
+C<undef> currently.  It'd be possible to make or return the cursor object in
+use (or which will be used when realized) but that doesn't seem worth
+bothering with as yet.
+
+=item C<active> (boolean, default false)
+
+Whether to apply the cursor to the widgets.  This can be set before widgets
+are added or before they're realized, in which case the cursor is applied
+later as soon as they're realized.
+
+=item C<priority> (number, default 0)
+
+The priority level of this WidgetCursor among multiple WidgetCursors acting
+on a widget.
+
+Higher values are higher priority.  A low value (perhaps negative) can act
+as a fallback, or a high value can trump other added cursors.
+
+=item C<include-children> (boolean, default false)
+
+Whether to apply the cursor to child widgets of the given widgets too.
+Normally the cursor in a child widget overrides its parents (as
+C<set_cursor> does at the window level).  But with C<include-children> a
+setting in a parent applies to the children too, with priority+newest
+applied as usual.
+
+=back
+
 =head1 APPLICATION BUSY
 
 The C<busy> mechanism sets a "watch" cursor on all windows to tell the user
 the program is doing CPU-intensive work and might not run the main loop to
 draw or interact for a while.
+
+=for me -- examples/timebusy.pl becomes /usr/share/doc/... in the deb
 
 If your busy state isn't CPU-intensive, but instead perhaps a Glib timer or
 an I/O watch on a socket, then this is not what you want, it'll turn off too
@@ -936,10 +1167,11 @@ straight into its work.  For example
       # do much number crunching
     }
 
-If you create new windows within a C<busy> then they too get the busy
-cursor.  You can even go busy before creating any windows at all.  But note
-WidgetCursor doesn't do any extra X flush for new creations; if you want
-them to show immediately then you'll have to flush in the usual way.
+If you create new windows within a C<busy> then they too get the busy cursor
+(or they're supposed to, something fishy in Gtk 2.20 and maybe 2.18 has
+broken it).  You can even go busy before creating any windows at all.  But
+note WidgetCursor doesn't do any extra X flush for new creations; if you
+want them to show immediately then you must flush in the usual way.
 
 C<busy> uses a C<WidgetCursor> object as described above and so cooperates
 with application uses of that.  Priority level 1000 is set to trump other
@@ -960,10 +1192,8 @@ remainder is finishing up.
 
 =head1 INVISIBLE CURSOR
 
-This invisible cusor constructor is used by WidgetCursor above for the
-C<"invisible"> cursor and is made available for general use.  Gtk has
-similar code in C<GtkEntry> and C<GtkTextView>, but as of Gtk 2.12 doesn't
-make it available to applications.
+The following invisible cursor is used by WidgetCursor for the
+C<"invisible"> cursor and is made available for general use.
 
 =over 4
 
@@ -989,14 +1219,35 @@ C<Gtk2::Gdk::Drawable>, another C<Gtk2::Gdk::Cursor>, etc.
     my $cursor = Gtk2::Ex::WidgetCursor->invisible_cursor ($widget);
 
 When passing a widget note the display comes from its toplevel
-C<Gtk2::Window> parent and until added in as a child somewhere under a
-toplevel its C<get_display> is the default display and C<invisible_cursor>
-will give a cursor for that display.
+C<Gtk2::Window> parent and until added as a child somewhere under a toplevel
+its C<get_display> is the default display and C<invisible_cursor> will give
+a cursor for that display.
 
-The invisible cursor is cached against the display, so repeated calls don't
+The invisible cursor is cached against the display so repeated calls don't
 make a new one every time.
 
 =back
+
+Gtk had its own "no pixels set" cursor constructor code in C<GtkEntry> and
+C<GtkTextView> prior to "blank-cursor" but didn't make it available to
+applications.
+
+=head1 BUILDABLE
+
+WidgetCursor is a C<Glib::Object> and can be created by C<Gtk2::Builder> in
+the usual way.  Each is a separate toplevel object and the C<widget>
+property sets what it should act on.  The C<add-widget> pseudo-property
+allows multiple widgets to be set.
+
+    <object class="Gtk2__Ex__WidgetCursor" id="wcursor">
+      <property name="widget">mywidget</property>
+      <property name="active">1</property>
+    </object>
+
+=for me -- becomes /usr/share/doc/... in the deb
+
+See F<examples/builder.pl> and F<examples/builder-add.pl> in the
+WidgetCursor sources for complete sample programs.
 
 =head1 LIMITATIONS
 
@@ -1010,29 +1261,30 @@ always the same no-window child.
 An exception to the no-window rule is C<Gtk2::Button>.  It has the no-window
 flag but in fact keeps a private input-only event window over its allocated
 space.  WidgetCursor digs that out and uses it to put the cursor on the
-intended area.  But an exception to the exception is C<Gtk2::LinkButton>
+intended area.  But an exception to this exception is C<Gtk2::LinkButton>
 where a setting on the button works fine, but any WidgetCursor on its parent
-is messed up.
+widget is messed up.
 
 In the future it might be possible to have cursors on no-window widgets by
 following motion-notify events within the container parent in order to
-update the cursor as it goes across different children.  But windowed
-widgets are normally best, since they let the X server take care of the
-display as the mouse moves around.
+update the cursor as it goes across different children.  Something similar
+might allow certain regions of a window to have a particular cursor, such as
+hyperlinked clickable text.  But windowed widgets are normally best, since
+they let the X server take care of the display as the mouse moves around.
 
-Reparenting widgets subject to an C<include_children> probably doesn't quite
-work.  If it involves a new realize it probably works, otherwise probably
-not.  Moving widgets is unusual, so in practice this isn't too bad.  (Doing
-the right thing in all cases might need a lot of C<add> or C<parent> signal
-connections.)
+Reparenting widgets under an C<include_children> probably doesn't quite
+work.  If it involves a new realize then it may work (as for reparenting to
+a different screen).  Moving widgets is unusual, so in practice this isn't
+too bad.  Doing the right thing in all cases might need a lot of C<add> or
+C<parent> signal connections.
 
-Widgets calling C<< $window->set_cursor >> themselves generally defeat the
-WidgetCursor mechanism.  WidgetCursor has some special handling for
+Widgets calling C<< $window->set_cursor >> themselves generally don't work
+with the WidgetCursor mechanism.  WidgetCursor has some special handling for
 C<Gtk2::Entry> and C<Gtk2::TextView> (their insertion point cursor), but a
 few other core widgets have problems.  The worst currently is
 C<Gtk2::LinkButton> per above.  Hopefully this can improve in the future,
-though ill effects can often be as modest as an C<include_children> merely
-not "including" children of offending types.
+though ill effects are often as modest as an C<include_children> merely not
+working on children of offending types.
 
 =head1 SEE ALSO
 
