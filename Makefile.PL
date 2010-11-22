@@ -38,6 +38,9 @@ MyMakeMakerExtras::WriteMakefile
                     'Gtk2' => 0,
                     'Glib::Object::Subclass' => 0,
 
+                    # my ObjectBits
+                    'Glib::Ex::SignalIds' => 1,
+
                     # 1.18 for pure-perl refaddr() fix
                     'Scalar::Util' => '1.18',
                    },

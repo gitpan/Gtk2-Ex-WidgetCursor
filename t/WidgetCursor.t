@@ -50,7 +50,7 @@ sub leftover_fields {
 # VERSION
 
 {
-  my $want_version = 14;
+  my $want_version = 15;
   is ($Gtk2::Ex::WidgetCursor::VERSION, $want_version, 'VERSION variable');
   is (Gtk2::Ex::WidgetCursor->VERSION,  $want_version, 'VERSION class method');
   ok (eval { Gtk2::Ex::WidgetCursor->VERSION($want_version); 1 },

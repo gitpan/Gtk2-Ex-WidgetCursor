@@ -28,7 +28,7 @@ use Scalar::Util 1.18; # 1.18 for pure-perl refaddr() fix
 # uncomment this to run the ### lines
 #use Smart::Comments;
 
-our $VERSION = 14;
+our $VERSION = 15;
 
 # Gtk 2.2 for get_display()
 # could work without it, but probably not worth bothering
@@ -421,9 +421,7 @@ sub _update_widget {
   if (! $wobj) {
     # no wobj applies to this widget any more
     delete $widget->{__PACKAGE__.'.installed'};
-    if (my $handler_id = delete $widget->{__PACKAGE__.'.realize_id'}) {
-      $widget->signal_handler_disconnect ($handler_id);
-    }
+    delete $widget->{__PACKAGE__.'.realize_ids'};
 
     my ($hack_win, $hack_cursor) = $widget->Gtk2_Ex_WidgetCursor_hack_restore;
     $hack_win ||= 0; # avoid undef
@@ -456,8 +454,12 @@ sub _update_widget {
   my @windows = $widget->Gtk2_Ex_WidgetCursor_windows;
   if (! defined $windows[0]) {
     ### not realized, defer setting
-    $widget->{__PACKAGE__.'.realize_id'} ||=
-      $widget->signal_connect (realize => \&_do_widget_realize);
+    $widget->{__PACKAGE__.'.realize_ids'} ||= do {
+      require Glib::Ex::SignalIds;
+      Glib::Ex::SignalIds->new
+          ($widget,
+           $widget->signal_connect (realize => \&_do_widget_realize))
+        };
     return;
   }
 
@@ -473,9 +475,8 @@ sub _update_widget {
 # 'realize' signal handler on a WidgetCursor affected widget
 sub _do_widget_realize {
   my ($widget) = @_;
-  ### now realized
-  $widget->signal_handler_disconnect
-    (delete $widget->{__PACKAGE__.'.realize_id'});
+  ### _do_widget_realize(): "$widget"
+  delete $widget->{__PACKAGE__.'.realize_ids'};
   _update_widget ($widget);
 }
 
